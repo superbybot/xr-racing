@@ -104,3 +104,6 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+/xr-racing-app/Library
+/xr-racing-app/Temp
+/xr-racing-app/UserSettings
