@@ -8,6 +8,54 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/BodyPoseDetectionExamples.unity"
+    guid: d2b22f234fc6b41df86812810ad4d2ce
+  - enabled: 1
+    path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/ComprehensiveRigExample.unity"
+    guid: 8e7be06d510db43768394c4164dfa93c
+  - enabled: 1
+    path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/ConcurrentHandsControllersExamples.unity"
+    guid: 9f6868a6a7eb943daaec08d7d4075740
+  - enabled: 1
+    path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/DistanceGrabExamples.unity"
+    guid: fee6fc356362f4d9298dac41f6e5afbb
+  - enabled: 1
+    path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/GestureExamples.unity"
+    guid: e66f5788327dc4fecb66bff1da32a953
+  - enabled: 1
+    path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/HandGrabExamples.unity"
+    guid: be6165767e1bc4bef9ac5afddd8bca6e
+  - enabled: 1
+    path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/HandGrabUseExamples.unity"
+    guid: e22b635aee90d4e8c8493f2459e091bc
+  - enabled: 1
+    path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/LocomotionExamples.unity"
+    guid: 91f208892f5c64023b6b432739bb77fe
+  - enabled: 1
+    path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/PanelWithManipulators.unity"
+    guid: d3c35acc7bba9498a95c2f0e591ae555
+  - enabled: 1
+    path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/PokeExamples.unity"
+    guid: 0f4b72d396a824d85bb10d518205eb02
+  - enabled: 1
+    path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/PoseExamples.unity"
+    guid: aa83f77be0169477e80435110a59d06a
+  - enabled: 1
+    path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/RayExamples.unity"
+    guid: f7227dfc690b84dc382cf086fef713d0
+  - enabled: 1
+    path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/SnapExamples.unity"
+    guid: ce7bec728400b4c248d9cac7afcb9eea
+  - enabled: 1
+    path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/TouchGrabExamples.unity"
+    guid: f873fa3575bd242af9f28542f35c4881
+  - enabled: 1
+    path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/TransformerExamples.unity"
+    guid: 106878e68608447ae98294b273187012
+  - enabled: 1
+    path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/UISetExamples.unity"
+    guid: 32e29bc92d37c4a5ca7a293be48a0878
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
