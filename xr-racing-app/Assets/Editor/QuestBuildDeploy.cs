@@ -12,13 +12,13 @@ public static class QuestBuildDeploy
     private const string BuildDir = "Builds/Android";
     private const string ApkPrefix = "xr-racing-app";
 
-    [MenuItem("Meta Quest/Build APK")]
+    [MenuItem("CI/CD/Build APK")]
     public static void BuildApk()
     {
         Build();
     }
 
-    [MenuItem("Meta Quest/Build and Deploy to Quest")]
+    [MenuItem("CI/CD/Build and Deploy to Quest")]
     public static void BuildAndDeploy()
     {
         string apkPath = Build();
@@ -28,13 +28,13 @@ public static class QuestBuildDeploy
         }
     }
 
-    [MenuItem("Meta Quest/Deploy Last Build")]
+    [MenuItem("CI/CD/Deploy Last Build")]
     public static void DeployLastBuild()
     {
         string apkPath = FindLatestApk();
         if (apkPath == null)
         {
-            Debug.LogError($"No build found in {BuildDir}. Run 'Meta Quest/Build APK' first.");
+            Debug.LogError($"No build found in {BuildDir}. Run 'CI/CD/Build APK' first.");
             return;
         }
 
@@ -116,6 +116,29 @@ public static class QuestBuildDeploy
     private static string FindAdb()
     {
         string exeName = Application.platform == RuntimePlatform.WindowsEditor ? "adb.exe" : "adb";
+
+        // Unity's own configured Android SDK path (Preferences > External Tools) is
+        // authoritative — it's what Unity itself uses to build/deploy Android, and
+        // covers the common case of an SDK installed via Unity Hub with no separate
+        // Android Studio install.
+        string unitySdkRoot = UnityEditor.Android.AndroidExternalToolsSettings.sdkRootPath;
+        if (!string.IsNullOrEmpty(unitySdkRoot))
+        {
+            string candidate = Path.Combine(unitySdkRoot, "platform-tools", exeName);
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        // Fall back to the SDK bundled with this Unity install (present when Android
+        // Build Support was installed without pointing Unity at an external SDK).
+        string bundledSdkRoot = Path.Combine(EditorApplication.applicationContentsPath, "PlaybackEngines", "AndroidPlayer", "SDK");
+        string bundledCandidate = Path.Combine(bundledSdkRoot, "platform-tools", exeName);
+        if (File.Exists(bundledCandidate))
+        {
+            return bundledCandidate;
+        }
 
         string envHome = Environment.GetEnvironmentVariable("ANDROID_HOME");
         if (string.IsNullOrEmpty(envHome))
