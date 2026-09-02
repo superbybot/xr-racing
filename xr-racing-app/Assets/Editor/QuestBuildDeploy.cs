@@ -12,13 +12,13 @@ public static class QuestBuildDeploy
     private const string BuildDir = "Builds/Android";
     private const string ApkPrefix = "xr-racing-app";
 
-    [MenuItem("CI/CD/Build APK")]
+    [MenuItem("Build Commands/Build APK")]
     public static void BuildApk()
     {
         Build();
     }
 
-    [MenuItem("CI/CD/Build and Deploy to Quest")]
+    [MenuItem("Build Commands/Build and Deploy to Quest")]
     public static void BuildAndDeploy()
     {
         string apkPath = Build();
@@ -28,13 +28,13 @@ public static class QuestBuildDeploy
         }
     }
 
-    [MenuItem("CI/CD/Deploy Last Build")]
+    [MenuItem("Build Commands/Deploy Last Build")]
     public static void DeployLastBuild()
     {
         string apkPath = FindLatestApk();
         if (apkPath == null)
         {
-            Debug.LogError($"No build found in {BuildDir}. Run 'CI/CD/Build APK' first.");
+            Debug.LogError($"No build found in {BuildDir}. Run 'Build Commands/Build APK' first.");
             return;
         }
 
