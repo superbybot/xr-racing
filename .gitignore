@@ -107,3 +107,6 @@ InitTestScene*.unity*
 /xr-racing-app/Library
 /xr-racing-app/Temp
 /xr-racing-app/UserSettings
+/xr-racing-app/Logs
+/xr-racing-app/Build
+/xr-racing-app/Builds

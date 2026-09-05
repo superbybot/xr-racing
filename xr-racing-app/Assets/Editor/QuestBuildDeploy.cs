@@ -15,16 +15,45 @@ public static class QuestBuildDeploy
     [MenuItem("Build Commands/Build APK")]
     public static void BuildApk()
     {
-        Build();
+        if (Application.isBatchMode)
+        {
+            string apkPath = Build();
+            if (apkPath == null)
+            {
+                EditorApplication.Exit(1);
+            }
+        }
+        else
+        {
+            Build();
+        }
     }
 
     [MenuItem("Build Commands/Build and Deploy to Quest")]
     public static void BuildAndDeploy()
     {
-        string apkPath = Build();
-        if (apkPath != null)
+        if (Application.isBatchMode)
         {
-            Deploy(apkPath);
+            string apkPath = Build();
+            if (apkPath == null)
+            {
+                EditorApplication.Exit(1);
+                return;
+            }
+
+            bool deployResult = Deploy(apkPath);
+            if (!deployResult)
+            {
+                EditorApplication.Exit(1);
+            }
+        }
+        else
+        {
+            string apkPath = Build();
+            if (apkPath != null)
+            {
+                Deploy(apkPath);
+            }
         }
     }
 
@@ -90,13 +119,13 @@ public static class QuestBuildDeploy
             .FirstOrDefault();
     }
 
-    private static void Deploy(string apkPath)
+    private static bool Deploy(string apkPath)
     {
         string adb = FindAdb();
         if (adb == null)
         {
             Debug.LogError("Could not locate adb. Set ANDROID_HOME/ANDROID_SDK_ROOT, or install Android platform-tools.");
-            return;
+            return false;
         }
 
         string packageName = PlayerSettings.GetApplicationIdentifier(BuildTargetGroup.Android);
@@ -105,12 +134,13 @@ public static class QuestBuildDeploy
         if (!RunAdb(adb, $"install -r \"{apkPath}\"", out string installOutput))
         {
             Debug.LogError($"adb install failed:\n{installOutput}");
-            return;
+            return false;
         }
         Debug.Log($"Install output:\n{installOutput}");
 
         RunAdb(adb, $"shell monkey -p {packageName} -c android.intent.category.LAUNCHER 1", out string launchOutput);
         Debug.Log($"Launched {packageName} on Quest.");
+        return true;
     }
 
     private static string FindAdb()

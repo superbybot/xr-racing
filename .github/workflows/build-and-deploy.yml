@@ -1,0 +1,30 @@
+name: Build and Deploy
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: [self-hosted, Windows]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build and deploy via Unity batch mode
+        shell: cmd
+        run: |
+          "C:\Program Files\Unity\Hub\Editor\6000.5.2f1\Editor\Unity.exe" -batchmode -quit -nographics -projectPath "%GITHUB_WORKSPACE%\xr-racing-app" -executeMethod QuestBuildDeploy.BuildAndDeploy -logFile "%GITHUB_WORKSPACE%\xr-racing-app\Logs\ci-build.log"
+
+      - name: Show build log on failure
+        shell: cmd
+        if: failure()
+        run: type "%GITHUB_WORKSPACE%\xr-racing-app\Logs\ci-build.log"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: xr-racing-app-apk
+          path: xr-racing-app/Builds/Android/*.apk
+          if-no-files-found: warn
