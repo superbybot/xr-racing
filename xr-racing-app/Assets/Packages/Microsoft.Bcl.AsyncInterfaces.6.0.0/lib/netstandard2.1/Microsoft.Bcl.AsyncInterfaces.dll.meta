@@ -16,6 +16,10 @@ PluginImporter:
     Any:
       enabled: 1
       settings: {}
+    Android:
+      enabled: 1
+      settings:
+        CPU: AnyCPU
     Editor:
       enabled: 0
       settings:
