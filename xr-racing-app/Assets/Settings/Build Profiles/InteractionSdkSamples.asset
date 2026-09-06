@@ -1,0 +1,139 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 15003, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: InteractionSdkSamples
+  m_EditorClassIdentifier: UnityEditor.dll::UnityEditor.Build.Profile.BuildProfile
+  m_AssetVersion: 2
+  m_BuildTarget: 13
+  m_Subtarget: 0
+  m_PlatformId: b9b35072a6f44c2e863f17467ea3dc13
+  m_PlatformBuildProfile:
+    rid: 6373617249258045530
+  m_ActivePlatformGuid: 
+  m_AdditionalPlatformBuildSettings: []
+  m_OverrideGlobalSceneList: 1
+  m_Scenes:
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/BodyPoseDetectionExamples.unity"
+    m_guid: d2b22f234fc6b41df86812810ad4d2ce
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/ComprehensiveRigExample.unity"
+    m_guid: 8e7be06d510db43768394c4164dfa93c
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/ConcurrentHandsControllersExamples.unity"
+    m_guid: 9f6868a6a7eb943daaec08d7d4075740
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/DistanceGrabExamples.unity"
+    m_guid: fee6fc356362f4d9298dac41f6e5afbb
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/GestureExamples.unity"
+    m_guid: e66f5788327dc4fecb66bff1da32a953
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/HandGrabExamples.unity"
+    m_guid: be6165767e1bc4bef9ac5afddd8bca6e
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/HandGrabUseExamples.unity"
+    m_guid: e22b635aee90d4e8c8493f2459e091bc
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/LocomotionExamples.unity"
+    m_guid: 91f208892f5c64023b6b432739bb77fe
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/PanelWithManipulators.unity"
+    m_guid: d3c35acc7bba9498a95c2f0e591ae555
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/PokeExamples.unity"
+    m_guid: 0f4b72d396a824d85bb10d518205eb02
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/PoseExamples.unity"
+    m_guid: aa83f77be0169477e80435110a59d06a
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/RayExamples.unity"
+    m_guid: f7227dfc690b84dc382cf086fef713d0
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/SnapExamples.unity"
+    m_guid: ce7bec728400b4c248d9cac7afcb9eea
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/TouchGrabExamples.unity"
+    m_guid: f873fa3575bd242af9f28542f35c4881
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/TransformerExamples.unity"
+    m_guid: 106878e68608447ae98294b273187012
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Example Scenes/UISetExamples.unity"
+    m_guid: 32e29bc92d37c4a5ca7a293be48a0878
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Feature Scenes/DebugBodyJoints.unity"
+    m_guid: abd747a5d8c82d5439ad2453550edbaf
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Feature Scenes/DebugBodyPoseComparer.unity"
+    m_guid: 17aa390da2a0b204ea6ba4126132fa3f
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Feature Scenes/DebugGesture.unity"
+    m_guid: 577706ac129bf594196dbdc4d948c6e6
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Feature Scenes/DebugHandGrab.unity"
+    m_guid: 4a33784a144ef2442a81151052a5bb3b
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Feature Scenes/DebugPoke.unity"
+    m_guid: acb3321847c599949acfd36b778e1f7a
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Feature Scenes/DebugPose.unity"
+    m_guid: 0c21dff7998be3b48bdbf4d868aa7710
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Feature Scenes/DebugRay.unity"
+    m_guid: 98733b7ba27575749b1cb1365c853e1f
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Feature Scenes/UseGrabPressure.unity"
+    m_guid: 7e42218241842f94cb568988a6037516
+  - m_enabled: 1
+    m_path: "Assets/Samples/Meta XR Interaction \u200BSDK/205.0.0/Tools/HandGrabPoseTool.unity"
+    m_guid: 8d12702353d5fd74ba260506070081fd
+  - m_enabled: 1
+    m_path: Assets/Samples/Meta XR Interaction SDK Essentials/205.0.0/UnityXR Integration/Scenes/UnityXRComprehensiveRigExample.unity
+    m_guid: 1c3839a1070e4a14ab46e590c49bec68
+  m_HasScriptingDefines: 0
+  m_ScriptingDefines: []
+  m_PlayerSettingsYaml:
+    m_Settings: []
+  requiredComponents: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 6373617249258045530
+      type: {class: AndroidPlatformBuildSettings, ns: UnityEditor.Android, asm: UnityEditor.Android.Extensions}
+      data:
+        m_Development: 0
+        m_ConnectProfiler: 0
+        m_BuildWithDeepProfilingSupport: 0
+        m_BuildWithCodeCoverage: 0
+        m_AllowDebugging: 0
+        m_WaitForManagedDebugger: 0
+        m_ManagedDebuggerFixedPort: 0
+        m_ExplicitNullChecks: 0
+        m_ExplicitDivideByZeroChecks: 0
+        m_ExplicitArrayBoundsChecks: 0
+        m_CompressionType: 2
+        m_InstallInBuildFolder: 0
+        m_InsightsSettingsContainer:
+          m_BuildProfileEngineDiagnosticsState: 2
+        m_AdaptivePerformanceEnabled: 0
+        m_BuildSubtarget: 0
+        m_BuildSystem: 1
+        m_ExportAsGoogleAndroidProject: 0
+        m_DebugSymbolLevel: 1
+        m_DebugSymbolFormat: 5
+        m_CurrentDeploymentTargetId: __builtin__target_default
+        m_BuildType: 2
+        m_LinkTimeOptimization: 0
+        m_BuildAppBundle: 0
+        m_IPAddressToConnect: 
+        m_SymlinkSources: 0

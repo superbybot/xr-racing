@@ -1,0 +1,106 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 15003, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: CoreSdkSamples
+  m_EditorClassIdentifier: UnityEditor.dll::UnityEditor.Build.Profile.BuildProfile
+  m_AssetVersion: 2
+  m_BuildTarget: 13
+  m_Subtarget: 0
+  m_PlatformId: b9b35072a6f44c2e863f17467ea3dc13
+  m_PlatformBuildProfile:
+    rid: 6373617249258045531
+  m_ActivePlatformGuid: 
+  m_AdditionalPlatformBuildSettings: []
+  m_OverrideGlobalSceneList: 1
+  m_Scenes:
+  - m_enabled: 1
+    m_path: Assets/Samples/Meta XR Core SDK/205.0.0/Haptics Sample/HapticsSample.unity
+    m_guid: 49b1546d3f546462bb1909b642f64043
+  - m_enabled: 1
+    m_path: Assets/Samples/Meta XR Core SDK/205.0.0/Meta XR Operator/CubeShooter/CubeShooter.unity
+    m_guid: 4a6f705905419b6468204745f02dede6
+  - m_enabled: 1
+    m_path: Assets/Samples/Meta XR Core SDK/205.0.0/Meta XR Operator/CubeShooter/CubeShooter-Broken.unity
+    m_guid: fdf9961814cc4e846a6b1b82c5d87d47
+  - m_enabled: 1
+    m_path: Assets/Samples/Meta XR Core SDK/205.0.0/Meta XR Operator/UIInteraction/UIInteraction.unity
+    m_guid: e427ce2936bc16c45b09b91408e86202
+  - m_enabled: 1
+    m_path: Assets/Samples/Meta XR Core SDK/205.0.0/Mixed Reality Sample/MixedReality.unity
+    m_guid: e6e432aec21604bc492f0b5f255c73ee
+  - m_enabled: 1
+    m_path: Assets/Samples/Meta XR Core SDK/205.0.0/Mixed Reality Sample/Scenes/CustomSceneManager.unity
+    m_guid: 0f7bbf7e1c8a94a059c21a017f5b8b39
+  - m_enabled: 1
+    m_path: Assets/Samples/Meta XR Core SDK/205.0.0/Sample Scenes/ControllerDrivenHandPoses.unity
+    m_guid: 36199071f67bc4de5a9a5e137b5320d1
+  - m_enabled: 1
+    m_path: Assets/Samples/Meta XR Core SDK/205.0.0/Sample Scenes/ControllerModels.unity
+    m_guid: da2122f14f67e4a57b199dc55550a3b1
+  - m_enabled: 1
+    m_path: Assets/Samples/Meta XR Core SDK/205.0.0/Sample Scenes/HandMicrogestures.unity
+    m_guid: a6da94062892841a3bcc87b561ec7712
+  - m_enabled: 1
+    m_path: Assets/Samples/Meta XR Core SDK/205.0.0/Sample Scenes/HandTest.unity
+    m_guid: b88bae01b53b74358954f4ef64126840
+  - m_enabled: 1
+    m_path: Assets/Samples/Meta XR Core SDK/205.0.0/Sample Scenes/HandTest_Custom.unity
+    m_guid: b3648e496abba491e828681d36cadca3
+  - m_enabled: 1
+    m_path: Assets/Samples/Meta XR Core SDK/205.0.0/Sample Scenes/HandTest_Custom_OpenXR.unity
+    m_guid: 55dd806140b894191ac09c5346878b4c
+  - m_enabled: 1
+    m_path: Assets/Samples/Meta XR Core SDK/205.0.0/Sample Scenes/HandTrackingWideMotionMode.unity
+    m_guid: ad7f6f37bc184411b9d30d845f97f9c2
+  - m_enabled: 1
+    m_path: Assets/Samples/Meta XR Core SDK/205.0.0/Sample Scenes/SimultaneousHandsAndControllers.unity
+    m_guid: fddde858603374b20a4e8dccd20ace61
+  - m_enabled: 1
+    m_path: Assets/Samples/Meta XR Core SDK/205.0.0/Tracking Origin Sample/TrackingOrigin.unity
+    m_guid: 6aa393c90c6694b4bad7572e2202edbf
+  m_HasScriptingDefines: 0
+  m_ScriptingDefines: []
+  m_PlayerSettingsYaml:
+    m_Settings: []
+  requiredComponents: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 6373617249258045531
+      type: {class: AndroidPlatformBuildSettings, ns: UnityEditor.Android, asm: UnityEditor.Android.Extensions}
+      data:
+        m_Development: 0
+        m_ConnectProfiler: 0
+        m_BuildWithDeepProfilingSupport: 0
+        m_BuildWithCodeCoverage: 0
+        m_AllowDebugging: 0
+        m_WaitForManagedDebugger: 0
+        m_ManagedDebuggerFixedPort: 0
+        m_ExplicitNullChecks: 0
+        m_ExplicitDivideByZeroChecks: 0
+        m_ExplicitArrayBoundsChecks: 0
+        m_CompressionType: 2
+        m_InstallInBuildFolder: 0
+        m_InsightsSettingsContainer:
+          m_BuildProfileEngineDiagnosticsState: 2
+        m_AdaptivePerformanceEnabled: 0
+        m_BuildSubtarget: 0
+        m_BuildSystem: 1
+        m_ExportAsGoogleAndroidProject: 0
+        m_DebugSymbolLevel: 1
+        m_DebugSymbolFormat: 5
+        m_CurrentDeploymentTargetId: __builtin__target_default
+        m_BuildType: 2
+        m_LinkTimeOptimization: 0
+        m_BuildAppBundle: 0
+        m_IPAddressToConnect: 
+        m_SymlinkSources: 0

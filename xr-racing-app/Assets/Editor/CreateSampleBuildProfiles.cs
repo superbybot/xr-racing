@@ -17,6 +17,9 @@ public static class CreateSampleBuildProfiles
 
         CreateOrUpdateProfile("CoreSdkSamples", androidPlatform.platformGuid,
             FindScenesUnderFoldersStartingWith("Meta XR Core SDK"));
+
+        CreateOrUpdateProfile("App", androidPlatform.platformGuid,
+            new[] { "Assets/Gameplay/Scenes/DrivingPrototype_VR.unity" });
     }
 
     private static string[] FindScenesUnderFoldersStartingWith(string folderNamePrefix)

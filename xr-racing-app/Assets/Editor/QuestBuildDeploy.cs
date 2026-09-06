@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.Build;
 using UnityEditor.Build.Profile;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
@@ -18,7 +19,7 @@ public static class QuestBuildDeploy
     {
         if (Application.isBatchMode)
         {
-            string apkPath = Build();
+            string apkPath = BuildWithProfile("App", ApkPrefix);
             if (apkPath == null)
             {
                 EditorApplication.Exit(1);
@@ -26,7 +27,7 @@ public static class QuestBuildDeploy
         }
         else
         {
-            Build();
+            BuildWithProfile("App", ApkPrefix);
         }
     }
 
@@ -35,14 +36,14 @@ public static class QuestBuildDeploy
     {
         if (Application.isBatchMode)
         {
-            string apkPath = Build();
+            string apkPath = BuildWithProfile("App", ApkPrefix);
             if (apkPath == null)
             {
                 EditorApplication.Exit(1);
                 return;
             }
 
-            bool deployResult = Deploy(apkPath, PlayerSettings.GetApplicationIdentifier(BuildTargetGroup.Android));
+            bool deployResult = Deploy(apkPath, PlayerSettings.GetApplicationIdentifier(NamedBuildTarget.Android));
             if (!deployResult)
             {
                 EditorApplication.Exit(1);
@@ -50,10 +51,10 @@ public static class QuestBuildDeploy
         }
         else
         {
-            string apkPath = Build();
+            string apkPath = BuildWithProfile("App", ApkPrefix);
             if (apkPath != null)
             {
-                Deploy(apkPath, PlayerSettings.GetApplicationIdentifier(BuildTargetGroup.Android));
+                Deploy(apkPath, PlayerSettings.GetApplicationIdentifier(NamedBuildTarget.Android));
             }
         }
     }
@@ -72,30 +73,40 @@ public static class QuestBuildDeploy
 
     private static void BuildAndDeployWithProfile(string profileName, string apkPrefix, string appIdSuffix)
     {
-        string packageName = PlayerSettings.GetApplicationIdentifier(BuildTargetGroup.Android) + appIdSuffix;
+        string originalAppId = PlayerSettings.GetApplicationIdentifier(NamedBuildTarget.Android);
+        string packageName = originalAppId + appIdSuffix;
 
-        if (Application.isBatchMode)
+        try
         {
-            string apkPath = BuildWithProfile(profileName, apkPrefix);
-            if (apkPath == null)
-            {
-                EditorApplication.Exit(1);
-                return;
-            }
+            PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, packageName);
 
-            bool profileDeployResult = Deploy(apkPath, packageName);
-            if (!profileDeployResult)
+            if (Application.isBatchMode)
             {
-                EditorApplication.Exit(1);
+                string apkPath = BuildWithProfile(profileName, apkPrefix);
+                if (apkPath == null)
+                {
+                    EditorApplication.Exit(1);
+                    return;
+                }
+
+                bool profileDeployResult = Deploy(apkPath, packageName);
+                if (!profileDeployResult)
+                {
+                    EditorApplication.Exit(1);
+                }
+            }
+            else
+            {
+                string apkPath = BuildWithProfile(profileName, apkPrefix);
+                if (apkPath != null)
+                {
+                    Deploy(apkPath, packageName);
+                }
             }
         }
-        else
+        finally
         {
-            string apkPath = BuildWithProfile(profileName, apkPrefix);
-            if (apkPath != null)
-            {
-                Deploy(apkPath, packageName);
-            }
+            PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, originalAppId);
         }
     }
 
@@ -109,44 +120,7 @@ public static class QuestBuildDeploy
             return;
         }
 
-        Deploy(apkPath, PlayerSettings.GetApplicationIdentifier(BuildTargetGroup.Android));
-    }
-
-    private static string Build()
-    {
-        var scenes = EditorBuildSettings.scenes
-            .Where(s => s.enabled)
-            .Select(s => s.path)
-            .ToArray();
-
-        if (scenes.Length == 0)
-        {
-            Debug.LogError("No enabled scenes in Build Settings. Add scenes via File > Build Settings before building.");
-            return null;
-        }
-
-        Directory.CreateDirectory(BuildDir);
-        string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-        string apkPath = Path.Combine(BuildDir, $"{ApkPrefix}_{timestamp}.apk");
-
-        var options = new BuildPlayerOptions
-        {
-            scenes = scenes,
-            locationPathName = apkPath,
-            target = BuildTarget.Android,
-            targetGroup = BuildTargetGroup.Android,
-            options = BuildOptions.None
-        };
-
-        BuildReport report = BuildPipeline.BuildPlayer(options);
-        if (report.summary.result != BuildResult.Succeeded)
-        {
-            Debug.LogError($"Build failed: {report.summary.result} ({report.summary.totalErrors} errors)");
-            return null;
-        }
-
-        Debug.Log($"Build succeeded: {apkPath} ({report.summary.totalSize / (1024 * 1024)} MB)");
-        return apkPath;
+        Deploy(apkPath, PlayerSettings.GetApplicationIdentifier(NamedBuildTarget.Android));
     }
 
     private static string BuildWithProfile(string profileName, string apkPrefix)
