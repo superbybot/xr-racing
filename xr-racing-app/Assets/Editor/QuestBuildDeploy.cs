@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.Build.Profile;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
@@ -41,7 +42,7 @@ public static class QuestBuildDeploy
                 return;
             }
 
-            bool deployResult = Deploy(apkPath);
+            bool deployResult = Deploy(apkPath, PlayerSettings.GetApplicationIdentifier(BuildTargetGroup.Android));
             if (!deployResult)
             {
                 EditorApplication.Exit(1);
@@ -52,7 +53,48 @@ public static class QuestBuildDeploy
             string apkPath = Build();
             if (apkPath != null)
             {
-                Deploy(apkPath);
+                Deploy(apkPath, PlayerSettings.GetApplicationIdentifier(BuildTargetGroup.Android));
+            }
+        }
+    }
+
+    [MenuItem("Build Commands/Build and Deploy Interaction SDK Samples")]
+    public static void BuildAndDeployInteractionSdkSamples()
+    {
+        BuildAndDeployWithProfile("InteractionSdkSamples", "interaction-sdk-samples", ".interactionsamples");
+    }
+
+    [MenuItem("Build Commands/Build and Deploy Core SDK Samples")]
+    public static void BuildAndDeployCoreSdkSamples()
+    {
+        BuildAndDeployWithProfile("CoreSdkSamples", "core-sdk-samples", ".coresdksamples");
+    }
+
+    private static void BuildAndDeployWithProfile(string profileName, string apkPrefix, string appIdSuffix)
+    {
+        string packageName = PlayerSettings.GetApplicationIdentifier(BuildTargetGroup.Android) + appIdSuffix;
+
+        if (Application.isBatchMode)
+        {
+            string apkPath = BuildWithProfile(profileName, apkPrefix);
+            if (apkPath == null)
+            {
+                EditorApplication.Exit(1);
+                return;
+            }
+
+            bool profileDeployResult = Deploy(apkPath, packageName);
+            if (!profileDeployResult)
+            {
+                EditorApplication.Exit(1);
+            }
+        }
+        else
+        {
+            string apkPath = BuildWithProfile(profileName, apkPrefix);
+            if (apkPath != null)
+            {
+                Deploy(apkPath, packageName);
             }
         }
     }
@@ -67,7 +109,7 @@ public static class QuestBuildDeploy
             return;
         }
 
-        Deploy(apkPath);
+        Deploy(apkPath, PlayerSettings.GetApplicationIdentifier(BuildTargetGroup.Android));
     }
 
     private static string Build()
@@ -107,6 +149,39 @@ public static class QuestBuildDeploy
         return apkPath;
     }
 
+    private static string BuildWithProfile(string profileName, string apkPrefix)
+    {
+        BuildProfile profile = BuildProfile.GetAllBuildProfiles()
+            .FirstOrDefault(p => p.name == profileName);
+
+        if (profile == null)
+        {
+            Debug.LogError($"Build profile '{profileName}' not found. Run 'Build Commands/Create Sample Build Profiles' first.");
+            return null;
+        }
+
+        Directory.CreateDirectory(BuildDir);
+        string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        string apkPath = Path.Combine(BuildDir, $"{apkPrefix}_{timestamp}.apk");
+
+        var profileOptions = new BuildPlayerWithProfileOptions
+        {
+            buildProfile = profile,
+            locationPathName = apkPath,
+            options = BuildOptions.None
+        };
+
+        BuildReport profileReport = BuildPipeline.BuildPlayer(profileOptions);
+        if (profileReport.summary.result != BuildResult.Succeeded)
+        {
+            Debug.LogError($"Build failed: {profileReport.summary.result} ({profileReport.summary.totalErrors} errors)");
+            return null;
+        }
+
+        Debug.Log($"Build succeeded: {apkPath} ({profileReport.summary.totalSize / (1024 * 1024)} MB)");
+        return apkPath;
+    }
+
     private static string FindLatestApk()
     {
         if (!Directory.Exists(BuildDir))
@@ -119,7 +194,7 @@ public static class QuestBuildDeploy
             .FirstOrDefault();
     }
 
-    private static bool Deploy(string apkPath)
+    private static bool Deploy(string apkPath, string packageName)
     {
         string adb = FindAdb();
         if (adb == null)
@@ -127,8 +202,6 @@ public static class QuestBuildDeploy
             Debug.LogError("Could not locate adb. Set ANDROID_HOME/ANDROID_SDK_ROOT, or install Android platform-tools.");
             return false;
         }
-
-        string packageName = PlayerSettings.GetApplicationIdentifier(BuildTargetGroup.Android);
 
         Debug.Log($"Installing {apkPath} on connected Quest...");
         if (!RunAdb(adb, $"install -r \"{apkPath}\"", out string installOutput))

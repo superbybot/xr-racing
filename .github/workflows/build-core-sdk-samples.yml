@@ -1,0 +1,38 @@
+name: Build Core SDK Samples
+on:
+  workflow_dispatch:
+
+env:
+  ACTIONS_RUNNER_DEBUG: "true"
+  ACTIONS_STEP_DEBUG: "true"
+
+jobs:
+  build-and-deploy:
+    runs-on: [self-hosted, Windows]
+    steps:
+      - name: Sync and clean local repository
+        shell: cmd
+        working-directory: C:\Users\super\OneDrive\Documents\GitHub\xr-racing-builder
+        run: |
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+          git clean -fd
+
+      - name: Build and deploy via Unity batch mode
+        shell: cmd
+        run: |
+          "C:\Program Files\Unity\Hub\Editor\6000.5.2f1\Editor\Unity.exe" -batchmode -quit -nographics -stackTraceLogType Full -projectPath "C:\Users\super\OneDrive\Documents\GitHub\xr-racing-builder\xr-racing-app" -executeMethod QuestBuildDeploy.BuildAndDeployCoreSdkSamples -logFile "C:\Users\super\OneDrive\Documents\GitHub\xr-racing-builder\xr-racing-app\Logs\ci-build-core-sdk-samples.log"
+
+      - name: Show build log
+        shell: cmd
+        if: always()
+        run: type "C:\Users\super\OneDrive\Documents\GitHub\xr-racing-builder\xr-racing-app\Logs\ci-build-core-sdk-samples.log"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: core-sdk-samples-apk
+          path: C:/Users/super/OneDrive/Documents/GitHub/xr-racing-builder/xr-racing-app/Builds/Android/core-sdk-samples_*.apk
+          if-no-files-found: warn
