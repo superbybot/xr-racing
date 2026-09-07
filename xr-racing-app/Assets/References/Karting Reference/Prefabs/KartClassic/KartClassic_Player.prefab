@@ -72,6 +72,94 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2131612221791803230, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: PlayerAnimator
+      value: 
+      objectReference: {fileID: 6643281551022463289}
+    - target: {fileID: 2754202577474932913, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: DriftGrip
+      value: 0.85
+      objectReference: {fileID: 0}
+    - target: {fileID: 2754202577474932913, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: DriftControl
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 2754202577474932913, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: DriftDampening
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2754202577474932913, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: SuspensionDamp
+      value: 5000
+      objectReference: {fileID: 0}
+    - target: {fileID: 2754202577474932913, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: baseStats.Grip
+      value: 0.97
+      objectReference: {fileID: 0}
+    - target: {fileID: 2754202577474932913, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: baseStats.Steer
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 2754202577474932913, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: SuspensionHeight
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2754202577474932913, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: SuspensionSpring
+      value: 70000
+      objectReference: {fileID: 0}
+    - target: {fileID: 2754202577474932913, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: baseStats.Braking
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 2754202577474932913, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: Nozzles.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2754202577474932913, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: DriftAdditionalSteer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2754202577474932913, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: MinAngleToFinishDrift
+      value: 29
+      objectReference: {fileID: 0}
+    - target: {fileID: 2754202577474932913, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: 'Nozzles.Array.data[0]'
+      value: 
+      objectReference: {fileID: 1547455610796878124}
+    - target: {fileID: 2754202577474932913, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: baseStats.Acceleration
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2754202577474932913, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: baseStats.CoastingDrag
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2754202577474932913, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: baseStats.ReverseSpeed
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 2754202577474932913, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: m_VisualWheels.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 2754202577474932913, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: MinSpeedPercentToFinishDrift
+      value: 0.95
+      objectReference: {fileID: 0}
+    - target: {fileID: 2754202577474932913, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: WheelsPositionVerticalOffset
+      value: 0.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 2754202577474932913, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: baseStats.ReverseAcceleration
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2754202577474932913, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: AirborneReorientationCoefficient
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4895846115232909958, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
       propertyPath: PlayerAnimator
       value: 
@@ -272,6 +360,22 @@ PrefabInstance:
       propertyPath: m_TagString
       value: Player
       objectReference: {fileID: 0}
+    - target: {fileID: 7187026899584537834, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: rearLeftWheel.wheelTransform
+      value: 
+      objectReference: {fileID: 7798798855868438172}
+    - target: {fileID: 7187026899584537834, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: frontLeftWheel.wheelTransform
+      value: 
+      objectReference: {fileID: 7798798855868438168}
+    - target: {fileID: 7187026899584537834, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: rearRightWheel.wheelTransform
+      value: 
+      objectReference: {fileID: 7798798855868438146}
+    - target: {fileID: 7187026899584537834, guid: cba6236a3ca88a54081cc989c4f0c08a, type: 3}
+      propertyPath: frontRightWheel.wheelTransform
+      value: 
+      objectReference: {fileID: 7798798855868438174}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
