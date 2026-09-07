@@ -39,24 +39,17 @@ namespace XRRacing.SdkPatches
 
         private void Awake()
         {
-            SceneManager.sceneLoaded += OnSceneLoaded;
-            StartCoroutine(FixNextFrame());
+            StartCoroutine(FixLoop());
         }
 
-        private void OnDestroy()
+        private IEnumerator FixLoop()
         {
-            SceneManager.sceneLoaded -= OnSceneLoaded;
-        }
-
-        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            StartCoroutine(FixNextFrame());
-        }
-
-        private IEnumerator FixNextFrame()
-        {
-            yield return null;
-            Fix();
+            var wait = new WaitForSeconds(0.5f);
+            while (true)
+            {
+                Fix();
+                yield return wait;
+            }
         }
 
         private void Fix()
