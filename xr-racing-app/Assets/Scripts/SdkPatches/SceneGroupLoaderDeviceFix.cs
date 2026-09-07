@@ -68,10 +68,17 @@ namespace XRRacing.SdkPatches
                 .Where(g => g.Count() == 1)
                 .ToDictionary(g => g.Key, g => g.First());
 
-            foreach (var loader in Object.FindObjectsByType<SceneGroupLoader>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            var loaders = Object.FindObjectsByType<SceneGroupLoader>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            int toggleCount = 0;
+            int fixedCount = 0;
+            int imageFixedCount = 0;
+
+            foreach (var loader in loaders)
             {
                 foreach (var toggle in loader.GetComponentsInChildren<Toggle>(true))
                 {
+                    toggleCount++;
+
                     if (toggle.enabled)
                     {
                         continue;
@@ -88,6 +95,7 @@ namespace XRRacing.SdkPatches
                     }
 
                     toggle.enabled = true;
+                    fixedCount++;
 
                     if (TileViewType == null)
                     {
@@ -103,6 +111,7 @@ namespace XRRacing.SdkPatches
                     if (ImageField?.GetValue(tileView) is Image image)
                     {
                         image.enabled = true;
+                        imageFixedCount++;
                     }
 
                     if (SceneMissingOverlayField?.GetValue(tileView) is Image overlay)
@@ -111,6 +120,8 @@ namespace XRRacing.SdkPatches
                     }
                 }
             }
+
+            Debug.Log($"[SceneGroupLoaderDeviceFix] loaders={loaders.Length} toggles={toggleCount} sceneEntries={scenesByDisplayName.Count} buildScenes={buildSceneNames.Count} tileViewTypeFound={TileViewType != null} fixedThisPass={fixedCount} imageFixedThisPass={imageFixedCount}");
         }
     }
 }
