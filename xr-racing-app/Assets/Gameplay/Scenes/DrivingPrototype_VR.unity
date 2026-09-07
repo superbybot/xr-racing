@@ -29915,15 +29915,6 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 4810912518991602691, guid: 19954de30401f73428254541a9ad156e, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 2145827378}
-    - targetCorrespondingSourceObject: {fileID: 4810912518991602691, guid: 19954de30401f73428254541a9ad156e, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2145827377}
-    - targetCorrespondingSourceObject: {fileID: 4810912518991602691, guid: 19954de30401f73428254541a9ad156e, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2145827376}
-    - targetCorrespondingSourceObject: {fileID: 4810912518991602691, guid: 19954de30401f73428254541a9ad156e, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 2145827375}
   m_SourcePrefab: {fileID: 100100000, guid: 19954de30401f73428254541a9ad156e, type: 3}
 --- !u!1 &2145827362 stripped
@@ -29948,42 +29939,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8caea7f2cfc5d4ab4904d45907765eb3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::XrRacing.Gameplay.Input.XRWheelInput
---- !u!114 &2145827376
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2145827362}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 314b5c2b3b5674963a9f545d645e069a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::KartGame.KartSystems.KartPlayerAnimator
---- !u!114 &2145827377
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2145827362}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9ecacddd5b767412589c62986991e3ee, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::KartGame.KartSystems.KartAnimation
---- !u!114 &2145827378
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2145827362}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: add82cd4b201b49deac5a929109a52c5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::KartGame.KartSystems.ArcadeKart
+  wheelTransform: {fileID: 2034623236}
+  wheelSpinAxis: {x: 0, y: 1, z: 0}
+  maxWheelAngle: 450
+  triggerThreshold: 0.5
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

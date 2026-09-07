@@ -184,11 +184,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4366ba6a4d5213d4f9fc7bba3e778799, type: 3}
---- !u!4 &444410451 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 7798798855868438172, guid: 19954de30401f73428254541a9ad156e, type: 3}
-  m_PrefabInstance: {fileID: 594855729}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &594855729
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -251,55 +246,11 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 4810912518991602691, guid: 19954de30401f73428254541a9ad156e, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 594855742}
-    - targetCorrespondingSourceObject: {fileID: 4810912518991602691, guid: 19954de30401f73428254541a9ad156e, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 594855741}
-    - targetCorrespondingSourceObject: {fileID: 4810912518991602691, guid: 19954de30401f73428254541a9ad156e, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 594855740}
-    - targetCorrespondingSourceObject: {fileID: 4810912518991602691, guid: 19954de30401f73428254541a9ad156e, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 594855739}
   m_SourcePrefab: {fileID: 100100000, guid: 19954de30401f73428254541a9ad156e, type: 3}
 --- !u!4 &594855730 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4810912518991602692, guid: 19954de30401f73428254541a9ad156e, type: 3}
-  m_PrefabInstance: {fileID: 594855729}
-  m_PrefabAsset: {fileID: 0}
---- !u!95 &594855731 stripped
-Animator:
-  m_CorrespondingSourceObject: {fileID: 6643281551022463289, guid: 19954de30401f73428254541a9ad156e, type: 3}
-  m_PrefabInstance: {fileID: 594855729}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &594855732 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 1547455610796878124, guid: 19954de30401f73428254541a9ad156e, type: 3}
-  m_PrefabInstance: {fileID: 594855729}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &594855733 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4810912517523753820, guid: 19954de30401f73428254541a9ad156e, type: 3}
-  m_PrefabInstance: {fileID: 594855729}
-  m_PrefabAsset: {fileID: 0}
---- !u!146 &594855734 stripped
-WheelCollider:
-  m_CorrespondingSourceObject: {fileID: 4810912518291869377, guid: 19954de30401f73428254541a9ad156e, type: 3}
-  m_PrefabInstance: {fileID: 594855729}
-  m_PrefabAsset: {fileID: 0}
---- !u!146 &594855735 stripped
-WheelCollider:
-  m_CorrespondingSourceObject: {fileID: 4810912519336000188, guid: 19954de30401f73428254541a9ad156e, type: 3}
-  m_PrefabInstance: {fileID: 594855729}
-  m_PrefabAsset: {fileID: 0}
---- !u!146 &594855736 stripped
-WheelCollider:
-  m_CorrespondingSourceObject: {fileID: 4810912519057417295, guid: 19954de30401f73428254541a9ad156e, type: 3}
-  m_PrefabInstance: {fileID: 594855729}
-  m_PrefabAsset: {fileID: 0}
---- !u!146 &594855737 stripped
-WheelCollider:
-  m_CorrespondingSourceObject: {fileID: 4810912518285214586, guid: 19954de30401f73428254541a9ad156e, type: 3}
   m_PrefabInstance: {fileID: 594855729}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &594855738 stripped
@@ -319,110 +270,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52aabe88048ac4ea68cfbf72a365ac16, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::XrRacing.Gameplay.Input.KartKeyboardInput
---- !u!114 &594855740
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 594855738}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 314b5c2b3b5674963a9f545d645e069a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::KartGame.KartSystems.KartPlayerAnimator
-  PlayerAnimator: {fileID: 594855731}
-  Kart: {fileID: 594855742}
-  SteeringParam: Steering
-  GroundedParam: Grounded
---- !u!114 &594855741
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 594855738}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9ecacddd5b767412589c62986991e3ee, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::KartGame.KartSystems.KartAnimation
-  kartController: {fileID: 594855742}
-  steeringAnimationDamping: 10
-  maxSteeringAngle: 30
-  frontLeftWheel:
-    wheelTransform: {fileID: 698241730}
-    wheelCollider: {fileID: 594855737}
-  frontRightWheel:
-    wheelTransform: {fileID: 1603311458}
-    wheelCollider: {fileID: 594855736}
-  rearLeftWheel:
-    wheelTransform: {fileID: 444410451}
-    wheelCollider: {fileID: 594855735}
-  rearRightWheel:
-    wheelTransform: {fileID: 2127582800}
-    wheelCollider: {fileID: 594855734}
---- !u!114 &594855742
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 594855738}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: add82cd4b201b49deac5a929109a52c5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::KartGame.KartSystems.ArcadeKart
-  baseStats:
-    TopSpeed: 15
-    Acceleration: 7
-    ReverseSpeed: 10
-    ReverseAcceleration: 3
-    AccelerationCurve: 0.5
-    Braking: 16
-    CoastingDrag: 5
-    Grip: 0.97
-    Steer: 4
-    AddedGravity: 1
-  m_VisualWheels:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  CenterOfMass: {fileID: 594855733}
-  AirborneReorientationCoefficient: 1
-  DriftGrip: 0.85
-  DriftAdditionalSteer: 0
-  MinAngleToFinishDrift: 29
-  MinSpeedPercentToFinishDrift: 0.95
-  DriftControl: 16
-  DriftDampening: 8
-  DriftSparkVFX: {fileID: 5720418349283321134, guid: 83d0ce15c25af954bbd1425a9ddf8458, type: 3}
-  DriftSparkHorizontalOffset: 0.15
-  DriftSparkRotation: 17
-  DriftTrailPrefab: {fileID: 4162818498552360563, guid: cb1856df3376595449bbe8408a5dbe8e, type: 3}
-  DriftTrailVerticalOffset: 0.05
-  JumpVFX: {fileID: 2613765726699392021, guid: 63b5def8db7a0de41ab8201bc3ce6dc7, type: 3}
-  NozzleVFX: {fileID: 7517924479111809978, guid: e89850b0c6c7e9f4591f70aa405a18a7, type: 3}
-  Nozzles:
-  - {fileID: 594855732}
-  SuspensionHeight: 0.1
-  SuspensionSpring: 70000
-  SuspensionDamp: 5000
-  WheelsPositionVerticalOffset: 0.05
-  FrontLeftWheel: {fileID: 594855737}
-  FrontRightWheel: {fileID: 594855736}
-  RearLeftWheel: {fileID: 594855735}
-  RearRightWheel: {fileID: 594855734}
-  GroundLayers:
-    serializedVersion: 2
-    m_Bits: 2048
---- !u!4 &698241730 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 7798798855868438168, guid: 19954de30401f73428254541a9ad156e, type: 3}
-  m_PrefabInstance: {fileID: 594855729}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1036339835
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -481,11 +328,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 331ae6cab0476fa45a1493448adfb9c7, type: 3}
---- !u!4 &1603311458 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 7798798855868438174, guid: 19954de30401f73428254541a9ad156e, type: 3}
-  m_PrefabInstance: {fileID: 594855729}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1664165643
 GameObject:
   m_ObjectHideFlags: 0
@@ -647,11 +489,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!4 &2127582800 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 7798798855868438146, guid: 19954de30401f73428254541a9ad156e, type: 3}
-  m_PrefabInstance: {fileID: 594855729}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
