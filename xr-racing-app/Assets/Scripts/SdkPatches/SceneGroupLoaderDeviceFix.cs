@@ -61,7 +61,20 @@ namespace XRRacing.SdkPatches
                 buildSceneNames.Add(Path.GetFileNameWithoutExtension(path));
             }
 
-            var scenesByDisplayName = Resources.LoadAll<SampleSceneGroup>("")
+            SampleSceneGroup[] groups;
+            try
+            {
+                groups = Resources.LoadAll<SampleSceneGroup>("");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[SceneGroupLoaderDeviceFix] Resources.LoadAll<SampleSceneGroup> threw: {e}");
+                return;
+            }
+
+            Debug.Log($"[SceneGroupLoaderDeviceFix] Resources.LoadAll returned {groups.Length} SampleSceneGroup object(s): " + string.Join(", ", groups.Select(g => $"[name={g.name} enabled={g.GroupEnabled} sceneCount={g.SceneCount}]")));
+
+            var scenesByDisplayName = groups
                 .Where(g => g.GroupEnabled && g.SceneCount > 0)
                 .SelectMany(g => g.GetScenes())
                 .GroupBy(s => s.DisplayName)
