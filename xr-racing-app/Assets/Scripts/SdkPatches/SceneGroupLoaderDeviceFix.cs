@@ -63,6 +63,15 @@ namespace XRRacing.SdkPatches
         private static readonly FieldInfo SceneInfoSceneNameField = SceneInfoType?.GetField("SceneName");
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void Install()
+        {
+            // BeforeSceneLoad only fires once, before the app's very first scene — later
+            // scene switches give SceneGroupLoader a fresh (re-corrupted) SampleSceneGroup
+            // load, so the patch has to reapply before each one, not just the first.
+            SceneManager.sceneLoaded += (_, _) => PatchCorruptedSceneGroups();
+            PatchCorruptedSceneGroups();
+        }
+
         private static void PatchCorruptedSceneGroups()
         {
             if (SceneInfoType == null || SceneInfosField == null)
