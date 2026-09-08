@@ -32,7 +32,6 @@ namespace XRRacing.SdkPatches
 
     internal class SceneGroupLoaderDeviceFixRunner : MonoBehaviour
     {
-        private static Text _debugOverlayText;
         private static readonly System.Type TileViewType =
             typeof(SceneGroupLoader).GetNestedType("SceneTileView", BindingFlags.NonPublic);
         private static readonly FieldInfo ImageField = TileViewType?.GetField("Image");
@@ -51,52 +50,6 @@ namespace XRRacing.SdkPatches
                 Fix();
                 yield return wait;
             }
-        }
-
-        private void EnsureDebugOverlay(SceneGroupLoader loader)
-        {
-            if (_debugOverlayText != null)
-            {
-                return;
-            }
-
-            var canvas = loader.GetComponentInParent<Canvas>();
-            if (canvas == null)
-            {
-                return;
-            }
-
-            var overlayGO = new GameObject("SceneGroupLoaderDeviceFixOverlay");
-            overlayGO.transform.SetParent(canvas.transform, false);
-
-            var imageGO = new GameObject("SceneGroupLoaderDeviceFixOverlayImage", typeof(RectTransform), typeof(Image));
-            imageGO.transform.SetParent(overlayGO.transform, false);
-            var imageRT = imageGO.GetComponent<RectTransform>();
-            imageRT.anchorMin = new Vector2(0, 1);
-            imageRT.anchorMax = new Vector2(0, 1);
-            imageRT.pivot = new Vector2(0, 1);
-            imageRT.anchoredPosition = new Vector2(20, -20);
-            imageRT.sizeDelta = new Vector2(700, 260);
-            var image = imageGO.GetComponent<Image>();
-            image.color = new Color(0f, 0f, 0f, 0.7f);
-
-            var textGO = new GameObject("SceneGroupLoaderDeviceFixOverlayText", typeof(RectTransform), typeof(Text));
-            textGO.transform.SetParent(imageGO.transform, false);
-            var textRT = textGO.GetComponent<RectTransform>();
-            textRT.anchorMin = Vector2.zero;
-            textRT.anchorMax = Vector2.one;
-            textRT.offsetMin = new Vector2(10, 10);
-            textRT.offsetMax = new Vector2(-10, -10);
-            textRT.sizeDelta = Vector2.zero;
-            var text = textGO.GetComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = 22;
-            text.color = Color.white;
-            text.alignment = TextAnchor.UpperLeft;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
-
-            _debugOverlayText = text;
         }
 
         private void Fix()
@@ -165,15 +118,6 @@ namespace XRRacing.SdkPatches
                     {
                         overlay.gameObject.SetActive(false);
                     }
-                }
-            }
-
-            if (loaders.Length > 0)
-            {
-                EnsureDebugOverlay(loaders[0]);
-                if (_debugOverlayText != null)
-                {
-                    _debugOverlayText.text = $"[SceneGroupLoaderDeviceFix] loaders={loaders.Length} toggles={toggleCount} sceneEntries={scenesByDisplayName.Count} buildScenes={buildSceneNames.Count} tileViewTypeFound={TileViewType != null} fixedThisPass={fixedCount} imageFixedThisPass={imageFixedCount}";
                 }
             }
 
