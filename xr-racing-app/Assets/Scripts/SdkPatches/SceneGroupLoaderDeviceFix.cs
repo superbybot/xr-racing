@@ -1,16 +1,18 @@
-// Oculus.Interaction.Samples.SceneGroupLoader (Meta XR Interaction SDK; used by the
-// ISDKExampleMenu prefab present in every Interaction SDK sample scene) checks whether a
-// menu tile's scene exists by calling SceneUtility.GetBuildIndexByScenePath(sceneInfo.SceneName)
-// on device. sceneInfo.SceneName is only the bare scene name (SampleSceneGroup.cs sets it from
-// SceneAsset.name), not a path, so GetBuildIndexByScenePath — which matches on full asset path —
-// always returns -1 on Quest even when the scene really is in the build. Every tile ends up
-// disabled and marked missing. This runs after SceneGroupLoader builds the menu and re-checks
-// each tile against the scene names actually present in this build, restoring the ones that
-// are really there, without touching Meta's package source.
+// Root cause (confirmed via on-device logging): Meta's SampleSceneGroup.cs conditionally
+// implements ISerializationCallbackReceiver and declares its editable scene list only under
+// #if UNITY_EDITOR. That mismatched field layout between Editor and Player builds corrupts
+// Resources.LoadAll<SampleSceneGroup>("") on Android/IL2CPP — it doesn't throw, but the
+// returned object's scene list silently deserializes as empty (SceneCount=0), even though the
+// same data is present and correct in the source .asset file. SceneGroupLoader.BuildSceneGroups()
+// reads that same broken call, so it builds zero scene groups/tiles on device.
+//
+// Since the corrupted data can't be trusted at runtime, this hardcodes the known-good
+// DisplayName -> SceneName mapping (copied from ISDKExampleScenes.asset) and uses it to
+// re-enable each tile's Toggle/Image and hide its "missing" overlay after SceneGroupLoader
+// runs, without touching Meta's package source.
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using Oculus.Interaction.Samples;
 using UnityEngine;
@@ -37,6 +39,26 @@ namespace XRRacing.SdkPatches
         private static readonly FieldInfo ImageField = TileViewType?.GetField("Image");
         private static readonly FieldInfo SceneMissingOverlayField = TileViewType?.GetField("SceneMissingOverlay");
 
+        private static readonly Dictionary<string, string> KnownSceneNamesByDisplayName = new Dictionary<string, string>
+        {
+            { "Comprehensive", "ComprehensiveRigExample" },
+            { "Simultaneous Hands & Controllers", "ConcurrentHandsControllersExamples" },
+            { "UI Set", "UISetExamples" },
+            { "Poke", "PokeExamples" },
+            { "Ray", "RayExamples" },
+            { "Distance Grab", "DistanceGrabExamples" },
+            { "Hand Grab", "HandGrabExamples" },
+            { "Touch Grab", "TouchGrabExamples" },
+            { "Hand Grab Use", "HandGrabUseExamples" },
+            { "Snap", "SnapExamples" },
+            { "Transformers", "TransformerExamples" },
+            { "Panel With Manipulators", "PanelWithManipulators" },
+            { "Gestures", "GestureExamples" },
+            { "Hand Pose", "PoseExamples" },
+            { "Locomotion", "LocomotionExamples" },
+            { "Body Pose", "BodyPoseDetectionExamples" },
+        };
+
         private void Awake()
         {
             StartCoroutine(FixLoop());
@@ -61,26 +83,6 @@ namespace XRRacing.SdkPatches
                 buildSceneNames.Add(Path.GetFileNameWithoutExtension(path));
             }
 
-            SampleSceneGroup[] groups;
-            try
-            {
-                groups = Resources.LoadAll<SampleSceneGroup>("");
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"[SceneGroupLoaderDeviceFix] Resources.LoadAll<SampleSceneGroup> threw: {e}");
-                return;
-            }
-
-            Debug.Log($"[SceneGroupLoaderDeviceFix] Resources.LoadAll returned {groups.Length} SampleSceneGroup object(s): " + string.Join(", ", groups.Select(g => $"[name={g.name} enabled={g.GroupEnabled} sceneCount={g.SceneCount}]")));
-
-            var scenesByDisplayName = groups
-                .Where(g => g.GroupEnabled && g.SceneCount > 0)
-                .SelectMany(g => g.GetScenes())
-                .GroupBy(s => s.DisplayName)
-                .Where(g => g.Count() == 1)
-                .ToDictionary(g => g.Key, g => g.First());
-
             var loaders = Object.FindObjectsByType<SceneGroupLoader>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             int toggleCount = 0;
             int fixedCount = 0;
@@ -97,12 +99,12 @@ namespace XRRacing.SdkPatches
                         continue;
                     }
 
-                    if (!scenesByDisplayName.TryGetValue(toggle.gameObject.name, out var sceneInfo))
+                    if (!KnownSceneNamesByDisplayName.TryGetValue(toggle.gameObject.name, out var sceneName))
                     {
                         continue;
                     }
 
-                    if (!buildSceneNames.Contains(sceneInfo.SceneName))
+                    if (!buildSceneNames.Contains(sceneName))
                     {
                         continue;
                     }
@@ -134,7 +136,7 @@ namespace XRRacing.SdkPatches
                 }
             }
 
-            Debug.Log($"[SceneGroupLoaderDeviceFix] loaders={loaders.Length} toggles={toggleCount} sceneEntries={scenesByDisplayName.Count} buildScenes={buildSceneNames.Count} tileViewTypeFound={TileViewType != null} fixedThisPass={fixedCount} imageFixedThisPass={imageFixedCount}");
+            Debug.Log($"[SceneGroupLoaderDeviceFix] loaders={loaders.Length} toggles={toggleCount} buildScenes={buildSceneNames.Count} tileViewTypeFound={TileViewType != null} fixedThisPass={fixedCount} imageFixedThisPass={imageFixedCount}");
         }
     }
 }
