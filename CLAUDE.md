@@ -86,6 +86,7 @@ written for an AI to execute directly:
 ```
 env -u OPENAI_BASE_URL OPENAI_API_BASE=http://localhost:1234/v1 OPENAI_API_KEY=dummy \
   aider --yes-always --no-auto-commits --no-git --no-show-model-warnings \
+  --no-check-update --no-show-release-notes \
   --edit-format diff \
   --model openai/<model-name> \
   --message "<precise instruction: what to change and why>" \

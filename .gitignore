@@ -110,3 +110,5 @@ InitTestScene*.unity*
 /xr-racing-app/Logs
 /xr-racing-app/Build
 /xr-racing-app/Builds
+/xr-racing-app/Assets/_Recovery
+xr-racing-app/Assets/_Recovery.meta
