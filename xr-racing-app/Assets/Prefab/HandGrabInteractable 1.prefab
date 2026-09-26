@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 2929723532085396614}
   - component: {fileID: 3311396583626703207}
   m_Layer: 0
-  m_Name: HandGrabInteractable
+  m_Name: HandGrabInteractable 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

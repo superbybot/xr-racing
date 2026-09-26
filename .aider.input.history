@@ -1,3 +1,32 @@
 
 # 2026-09-21 18:48:29.059337
 +Fix the bug in Add so it returns the sum of a and b instead of the difference.
+
+# 2026-09-25 17:19:46.220149
++In XRWheelInput.cs make these changes and nothing else:
++1. Change the default of wheelSpinAxis from Vector3.forward to Vector3.right (the grabbable KartSteer wheel rotates around its local X axis).
++2. Change the default of maxWheelAngle from 450f to 90f (the ToAngleAxis-based measurement cannot exceed 180 degrees, so 450 made full lock unreachable).
++3. Remove the triggerThreshold field. Add two serialized fields right after maxWheelAngle: '[SerializeField] private OVRInput.Button accelerateButton = OVRInput.Button.One;' and '[SerializeField] private OVRInput.Button brakeButton = OVRInput.Button.Two;'.
++4. In GenerateInput, replace the accelerate line and the whole trigger-based brake block (leftTrigger, rightTrigger, brake) with exactly:
++            bool accelerate = OVRInput.Get(accelerateButton, OVRInput.Controller.Touch);
++            bool brake = OVRInput.Get(brakeButton, OVRInput.Controller.Touch);
++Triggers are no longer used because they are needed for grabbing the wheel. Brake also reverses when stopped (handled by ArcadeKart).
+
+# 2026-09-25 17:20:08.338656
++In XRWheelInput.cs make these changes and nothing else:
++1. Change the default of wheelSpinAxis from Vector3.forward to Vector3.right (the grabbable KartSteer wheel rotates around its local X axis).
++2. Change the default of maxWheelAngle from 450f to 90f (the ToAngleAxis-based measurement cannot exceed 180 degrees, so 450 made full lock unreachable).
++3. Remove the triggerThreshold field. Add two serialized fields right after maxWheelAngle: '[SerializeField] private OVRInput.Button accelerateButton = OVRInput.Button.One;' and '[SerializeField] private OVRInput.Button brakeButton = OVRInput.Button.Two;'.
++4. In GenerateInput, replace the accelerate line and the whole trigger-based brake block (leftTrigger, rightTrigger, brake) with exactly:
++            bool accelerate = OVRInput.Get(accelerateButton, OVRInput.Controller.Touch);
++            bool brake = OVRInput.Get(brakeButton, OVRInput.Controller.Touch);
++Triggers are no longer used because they are needed for grabbing the wheel. Brake also reverses when stopped (handled by ArcadeKart).
+
+# 2026-09-25 17:58:05.661043
++Implement the empty VRCameraHeightSmoother MonoBehaviour. It goes on the VR camera rig, which is a child of the kart, and low-pass filters the kart's vertical (world Y) movement so suspension jitter doesn't shake the player's head. Keep namespace and class name. Implement exactly:
++- Fields: [SerializeField] private Transform followTarget; (tooltip: the kart; defaults to parent if null), [SerializeField] private float smoothTime = 0.12f; [SerializeField] private float maxOffset = 0.1f; (tooltip: max vertical metres the rig may lag behind the kart).
++- Private fields: Vector3 _baseLocalPosition; float _smoothedY; float _velocity;
++- Awake(): if followTarget is null, set it to transform.parent. Store _baseLocalPosition = transform.localPosition. If followTarget not null, _smoothedY = followTarget.position.y.
++- LateUpdate(): return if followTarget is null. float targetY = followTarget.position.y; _smoothedY = Mathf.SmoothDamp(_smoothedY, targetY, ref _velocity, smoothTime); float offset = Mathf.Clamp(_smoothedY - targetY, -maxOffset, maxOffset); _smoothedY = targetY + offset; then transform.localPosition = _baseLocalPosition; transform.position += Vector3.up * offset;
++- OnDisable(): restore transform.localPosition = _baseLocalPosition.
++Add a short XML summary comment on the class. No other files.

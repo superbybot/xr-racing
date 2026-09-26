@@ -28,8 +28,8 @@ namespace XrRacing.Gameplay.Input
 
             return new KartGame.KartSystems.InputData
             {
-                Accelerate = accelerate,
-                Brake = brake,
+                Accelerate = accelerate ? 1f : 0f,
+                Brake = brake ? 1f : 0f,
                 TurnInput = turnInput
             };
         }

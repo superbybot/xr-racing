@@ -159,6 +159,8 @@ namespace KartGame.KartSystems
 
         const float k_NullInput = 0.01f;
         const float k_NullSpeed = 0.01f;
+        // how far the brake must be pressed before it counts as a drift request
+        const float k_DriftBrakeThreshold = 0.5f;
         Vector3 m_VerticalReference = Vector3.up;
 
         // Drift params
@@ -331,7 +333,7 @@ namespace KartGame.KartSystems
             for (int i = 0; i < m_Inputs.Length; i++)
             {
                 Input = m_Inputs[i].GenerateInput();
-                WantsToDrift = Input.Brake && Vector3.Dot(Rigidbody.linearVelocity, transform.forward) > 0.0f;
+                WantsToDrift = Input.Brake > k_DriftBrakeThreshold && Vector3.Dot(Rigidbody.linearVelocity, transform.forward) > 0.0f;
             }
         }
 
@@ -393,7 +395,7 @@ namespace KartGame.KartSystems
             else
             {
                 // use this value to play kart sound when it is waiting the race start countdown.
-                return Input.Accelerate ? 1.0f : 0.0f;
+                return Input.Accelerate;
             }
         }
 
@@ -413,9 +415,9 @@ namespace KartGame.KartSystems
             }
         }
 
-        void MoveVehicle(bool accelerate, bool brake, float turnInput)
+        void MoveVehicle(float accelerate, float brake, float turnInput)
         {
-            float accelInput = (accelerate ? 1.0f : 0.0f) - (brake ? 1.0f : 0.0f);
+            float accelInput = accelerate - brake;
 
             // manual acceleration curve coefficient scalar
             float accelerationCurveCoeff = 5;
@@ -433,7 +435,7 @@ namespace KartGame.KartSystems
             float multipliedAccelerationCurve = m_FinalStats.AccelerationCurve * accelerationCurveCoeff;
             float accelRamp = Mathf.Lerp(multipliedAccelerationCurve, 1, accelRampT * accelRampT);
 
-            bool isBraking = (localVelDirectionIsFwd && brake) || (!localVelDirectionIsFwd && accelerate);
+            bool isBraking = (localVelDirectionIsFwd && brake > k_NullInput) || (!localVelDirectionIsFwd && accelerate > k_NullInput);
 
             // if we are braking (moving reverse to where we are going)
             // use the braking accleration instead
