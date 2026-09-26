@@ -24,6 +24,8 @@ namespace XrRacing.Gameplay.Input
         private Quaternion _originRotation;
         private float _wheelAngle;
         private Transform _trackingSpace;
+        private float _nextStatusTime;
+        private string _lastStatus;
 
         private void Awake()
         {
@@ -48,6 +50,8 @@ namespace XrRacing.Gameplay.Input
             {
                 return;
             }
+
+            LogInteractorStatus();
 
             // Unwrap relative to last frame so turning the hand past 180 degrees doesn't flip to the other limit.
             float previousAngle = _wheelAngle;
@@ -83,6 +87,11 @@ namespace XrRacing.Gameplay.Input
                 return;
             }
 
+            if (wheelGrabbable != null)
+            {
+                wheelGrabbable.WhenPointerEventRaised += LogPointerEvent;
+            }
+
             OVRCameraRig rig = FindFirstObjectByType<OVRCameraRig>();
             _trackingSpace = rig != null ? rig.trackingSpace : null;
 
@@ -101,6 +110,70 @@ namespace XrRacing.Gameplay.Input
                 $"pivot={pivot} worldAxis={WheelAxisWorld()} lossyScale={wheelTransform.lossyScale} " +
                 $"{meshInfo} {colliderInfo} trackingSpace={(_trackingSpace != null ? _trackingSpace.name : "none")} " +
                 $"grabbable={(wheelGrabbable != null ? wheelGrabbable.name : "none")} transformers=({DescribeTransformers()})");
+        }
+
+        // Every 0.5s (and whenever it changes), logs the input mode and which grab interactors exist and are active,
+        // to see whether hand grabbing is still available after switching between hands and controllers.
+        private void LogInteractorStatus()
+        {
+            if (!WheelDebugLog.Enabled || Time.time < _nextStatusTime)
+            {
+                return;
+            }
+
+            _nextStatusTime = Time.time + 0.5f;
+
+            string status = $"active={OVRInput.GetActiveController()} " +
+                $"handsL={OVRInput.IsControllerConnected(OVRInput.Controller.LHand)} handsR={OVRInput.IsControllerConnected(OVRInput.Controller.RHand)} " +
+                $"touchL={OVRInput.IsControllerConnected(OVRInput.Controller.LTouch)} touchR={OVRInput.IsControllerConnected(OVRInput.Controller.RTouch)} |";
+
+            foreach (var interactor in FindObjectsByType<Oculus.Interaction.HandGrab.HandGrabInteractor>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                status += $" {DescribeInteractor(interactor, interactor.State.ToString())}";
+            }
+
+            foreach (var interactor in FindObjectsByType<Oculus.Interaction.GrabInteractor>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                status += $" {DescribeInteractor(interactor, interactor.State.ToString())}";
+            }
+
+            if (status != _lastStatus)
+            {
+                _lastStatus = status;
+                WheelDebugLog.Write("Status", "Interactors", wheelGrabbable != null ? wheelGrabbable.SelectingPointsCount : -1, -1, _wheelAngle, status);
+            }
+        }
+
+        private static string DescribeInteractor(MonoBehaviour interactor, string state)
+        {
+            Transform parent = interactor.transform.parent;
+            string grandparent = parent != null && parent.parent != null ? parent.parent.name : "none";
+            return $"[{interactor.name} in {(parent != null ? parent.name : "none")}/{grandparent}: " +
+                $"activeInHierarchy={interactor.gameObject.activeInHierarchy} enabled={interactor.enabled} state={state}]";
+        }
+
+        // Logs which interactor (e.g. HandGrabInteractor vs GrabInteractor) grabbed or released the wheel, and its pose.
+        private void LogPointerEvent(Oculus.Interaction.PointerEvent evt)
+        {
+            if (evt.Type == Oculus.Interaction.PointerEventType.Move)
+            {
+                return;
+            }
+
+            string interactor = evt.Data is Component component
+                ? $"{component.GetType().Name} on '{component.gameObject.name}' (parent '{(component.transform.parent != null ? component.transform.parent.name : "none")}')"
+                : evt.Data != null ? evt.Data.GetType().Name : "null";
+
+            WheelDebugLog.Write("Pointer", evt.Type.ToString(), wheelGrabbable.SelectingPointsCount, wheelGrabbable.GrabPoints.Count, _wheelAngle,
+                $"id={evt.Identifier} interactor={interactor} {DescribeAroundWheel(evt.Pose.position)}");
+        }
+
+        private void OnDestroy()
+        {
+            if (wheelGrabbable != null)
+            {
+                wheelGrabbable.WhenPointerEventRaised -= LogPointerEvent;
+            }
         }
 
         private string DescribeTransformers()
