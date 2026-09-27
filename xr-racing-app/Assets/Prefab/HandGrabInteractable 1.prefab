@@ -56,7 +56,7 @@ MonoBehaviour:
   _scoringModifier:
     _positionRotationWeight: 0.8
   _slippiness: 0
-  _supportedGrabTypes: 3
+  _supportedGrabTypes: 2
   _pinchGrabRules:
     _thumbRequirement: 1
     _indexRequirement: 1
@@ -65,8 +65,8 @@ MonoBehaviour:
     _pinkyRequirement: 0
     _unselectMode: 0
   _palmGrabRules:
-    _thumbRequirement: 1
-    _indexRequirement: 2
+    _thumbRequirement: 0
+    _indexRequirement: 0
     _middleRequirement: 2
     _ringRequirement: 2
     _pinkyRequirement: 1
@@ -446,7 +446,7 @@ MonoBehaviour:
   _usesHandPose: 1
   _handPose:
     _handedness: 0
-    _fingersFreedom: 0200000002000000010000000100000000000000
+    _fingersFreedom: 0000000000000000010000000100000000000000
     _jointRotations:
     - {x: -0.06665304, y: 0.3969201, z: -0.5750258, w: 0.71229}
     - {x: 0.2201137, y: -0.05016914, z: 0.08162888, w: 0.9707573}

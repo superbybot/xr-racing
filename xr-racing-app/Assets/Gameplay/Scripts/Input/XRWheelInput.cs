@@ -14,6 +14,16 @@ namespace XrRacing.Gameplay.Input
         [SerializeField] private OVRInput.Controller brakeController = OVRInput.Controller.LTouch;
         [Tooltip("Trigger travel ignored at the start, so resting a finger on it doesn't drive.")]
         [SerializeField, Range(0f, 0.5f)] private float triggerDeadzone = 0.05f;
+        [Tooltip("Hand-tracked hand whose finger curls act as the pedals.")]
+        [SerializeField] private Oculus.Interaction.Input.Handedness pedalHand = Oculus.Interaction.Input.Handedness.Right;
+        [Tooltip("Finger curled for gas when using hand tracking.")]
+        [SerializeField] private Oculus.Interaction.Input.HandFinger accelerateFinger = Oculus.Interaction.Input.HandFinger.Index;
+        [Tooltip("Gas finger curl in degrees: x = released, y = fully pressed.")]
+        [SerializeField] private Vector2 accelerateCurlRange = new Vector2(200f, 240f);
+        [Tooltip("Finger curled for brake / reverse when using hand tracking.")]
+        [SerializeField] private Oculus.Interaction.Input.HandFinger brakeFinger = Oculus.Interaction.Input.HandFinger.Thumb;
+        [Tooltip("Brake finger curl in degrees: x = released, y = fully pressed.")]
+        [SerializeField] private Vector2 brakeCurlRange = new Vector2(190f, 210f);
         [Tooltip("Grabbable on the wheel; used to detect release. Defaults to the one on Wheel Transform.")]
         [SerializeField] private Oculus.Interaction.Grabbable wheelGrabbable;
         [Tooltip("Degrees per second the wheel turns back to center after it is released. 0 disables.")]
@@ -26,6 +36,17 @@ namespace XrRacing.Gameplay.Input
         private Transform _trackingSpace;
         private float _nextStatusTime;
         private string _lastStatus;
+        private Oculus.Interaction.HandGrab.HandGrabInteractor[] _handInteractors;
+        private Oculus.Interaction.HandGrab.HandGrabInteractable[] _wheelInteractables;
+        private float _nextGrabDebugTime;
+        private readonly System.Collections.Generic.Dictionary<Oculus.Interaction.HandGrab.HandGrabInteractor, string> _lastGrabState =
+            new System.Collections.Generic.Dictionary<Oculus.Interaction.HandGrab.HandGrabInteractor, string>();
+        private static readonly System.Reflection.FieldInfo GripColliderField =
+            typeof(Oculus.Interaction.HandGrab.HandGrabInteractor).GetField("_gripCollider",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        [Tooltip("Temporary: hands closer than this (meters) to the wheel center get their grab attempt logged.")]
+        [SerializeField] private float grabDebugRadius = 0.6f;
 
         private void Awake()
         {
@@ -52,6 +73,7 @@ namespace XrRacing.Gameplay.Input
             }
 
             LogInteractorStatus();
+            LogHandGrabAttempts();
 
             // Unwrap relative to last frame so turning the hand past 180 degrees doesn't flip to the other limit.
             float previousAngle = _wheelAngle;
@@ -82,6 +104,11 @@ namespace XrRacing.Gameplay.Input
 
         private void Start()
         {
+            _handInteractors = FindObjectsByType<Oculus.Interaction.HandGrab.HandGrabInteractor>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            _wheelInteractables = System.Array.FindAll(
+                FindObjectsByType<Oculus.Interaction.HandGrab.HandGrabInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None),
+                IsWheelInteractable);
+
             if (!WheelDebugLog.Enabled || wheelTransform == null)
             {
                 return;
@@ -142,6 +169,114 @@ namespace XrRacing.Gameplay.Input
                 _lastStatus = status;
                 WheelDebugLog.Write("Status", "Interactors", wheelGrabbable != null ? wheelGrabbable.SelectingPointsCount : -1, -1, _wheelAngle, status);
             }
+        }
+
+        // Logs why a hand near the wheel does or doesn't grab it. A palm grab only starts on the frame the grab
+        // fingers close (selectChanged) while the hand's grip collider overlaps the wheel's colliders (overlap).
+        // Logged every 0.1s while a hand is near the wheel, and immediately on state changes and finger-close frames.
+        private void LogHandGrabAttempts()
+        {
+            if (!WheelDebugLog.Enabled || _handInteractors == null || _wheelInteractables == null)
+            {
+                return;
+            }
+
+            bool periodic = Time.time >= _nextGrabDebugTime;
+            if (periodic)
+            {
+                _nextGrabDebugTime = Time.time + 0.1f;
+            }
+
+            foreach (var interactor in _handInteractors)
+            {
+                Oculus.Interaction.Input.IHand hand = interactor != null ? interactor.Hand : null;
+                if (hand == null || !hand.IsConnected)
+                {
+                    continue;
+                }
+
+                Transform palm = interactor.PalmPoint != null ? interactor.PalmPoint : interactor.transform;
+                float distance = Vector3.Distance(palm.position, wheelTransform.position);
+                string state = $"{interactor.State} candidate={NameOf(interactor.Interactable)} selected={NameOf(interactor.SelectedInteractable)}";
+                _lastGrabState.TryGetValue(interactor, out string lastState);
+                bool stateChanged = state != lastState;
+                _lastGrabState[interactor] = state;
+
+                Oculus.Interaction.GrabAPI.HandGrabAPI api = interactor.HandGrabApi;
+                Collider grip = GripColliderField != null ? GripColliderField.GetValue(interactor) as Collider : null;
+                bool fingersClosed = false;
+                string perInteractable = "";
+
+                foreach (var interactable in _wheelInteractables)
+                {
+                    bool selectChanged = api != null && api.IsHandSelectPalmFingersChanged(interactable.PalmGrabRules);
+                    fingersClosed |= selectChanged;
+                    perInteractable += $" [{interactable.name}: active={interactable.isActiveAndEnabled} state={interactable.State} " +
+                        $"hand={interactable.SupportsHandedness(hand.Handedness)} overlap={DescribeOverlap(grip, interactable)} " +
+                        $"palmScore={(api != null ? WheelDebugLog.F(api.GetHandPalmScore(interactable.PalmGrabRules)) : "n/a")} " +
+                        $"palmGrabbing={(api != null && api.IsHandPalmGrabbing(interactable.PalmGrabRules))} selectChanged={selectChanged}]";
+                }
+
+                if (!stateChanged && !fingersClosed && !(periodic && distance <= grabDebugRadius))
+                {
+                    continue;
+                }
+
+                string fingers = "";
+                if (api != null)
+                {
+                    for (var finger = Oculus.Interaction.Input.HandFinger.Thumb; finger <= Oculus.Interaction.Input.HandFinger.Pinky; finger++)
+                    {
+                        fingers += $"{finger}={WheelDebugLog.F(api.GetFingerPalmStrength(finger))} ";
+                    }
+                }
+
+                string evt = stateChanged ? "StateChange" : fingersClosed ? "FingersClosed" : "Near";
+                WheelDebugLog.Write("Grab", evt, wheelGrabbable != null ? wheelGrabbable.SelectingPointsCount : -1, -1, _wheelAngle,
+                    $"{interactor.name} ({hand.Handedness}, in {(interactor.transform.parent != null ? interactor.transform.parent.name : "none")}) " +
+                    $"state={state} tracked={hand.IsTrackedDataValid} highConf={hand.IsHighConfidence} " +
+                    $"palm {DescribeAroundWheel(palm.position)} dist={WheelDebugLog.F(distance)} " +
+                    $"grip={(grip != null ? $"{grip.name}:{grip.enabled}" : "none")} palmStrength({fingers.Trim()}){perInteractable}");
+            }
+        }
+
+        // yes/no whether the grip collider touches any enabled collider of the interactable, same test the interactor uses.
+        private static string DescribeOverlap(Collider grip, Oculus.Interaction.HandGrab.HandGrabInteractable interactable)
+        {
+            if (grip == null)
+            {
+                return "noGrip";
+            }
+
+            if (interactable.Colliders == null || interactable.Colliders.Length == 0)
+            {
+                return "noColliders";
+            }
+
+            foreach (Collider collider in interactable.Colliders)
+            {
+                if (collider.enabled && Physics.ComputePenetration(
+                        grip, grip.transform.position, grip.transform.rotation,
+                        collider, collider.transform.position, collider.transform.rotation,
+                        out _, out _))
+                {
+                    return "yes";
+                }
+            }
+
+            return "no";
+        }
+
+        private static string NameOf(Object obj)
+        {
+            return obj != null ? obj.name : "none";
+        }
+
+        private bool IsWheelInteractable(Oculus.Interaction.HandGrab.HandGrabInteractable interactable)
+        {
+            return interactable != null && wheelTransform != null &&
+                (interactable.transform.IsChildOf(wheelTransform) ||
+                 (interactable.Rigidbody != null && interactable.Rigidbody.transform == wheelTransform));
         }
 
         private static string DescribeInteractor(MonoBehaviour interactor, string state)
@@ -207,6 +342,17 @@ namespace XrRacing.Gameplay.Input
             WheelDebugLog.Write("Hand", "Controllers", selecting, grabPoints, _wheelAngle,
                 $"active={OVRInput.GetActiveController()} " +
                 $"L[{DescribeController(OVRInput.Controller.LTouch)}] R[{DescribeController(OVRInput.Controller.RTouch)}]");
+
+            Oculus.Interaction.Input.IHand hand = GetTrackedPedalHand();
+            if (hand != null)
+            {
+                var shapes = Oculus.Interaction.PoseDetection.FingerFeatureStateProvider.DefaultFingerShapes;
+                WheelDebugLog.Write("Hand", "PedalCurl", selecting, grabPoints, _wheelAngle,
+                    $"{accelerateFinger}={WheelDebugLog.F(shapes.GetCurlValue(accelerateFinger, hand))} " +
+                    $"{brakeFinger}={WheelDebugLog.F(shapes.GetCurlValue(brakeFinger, hand))} " +
+                    $"gas={WheelDebugLog.F(ReadFingerCurl(hand, accelerateFinger, accelerateCurlRange))} " +
+                    $"brake={WheelDebugLog.F(ReadFingerCurl(hand, brakeFinger, brakeCurlRange))}");
+            }
         }
 
         private string DescribeController(OVRInput.Controller controller)
@@ -257,12 +403,50 @@ namespace XrRacing.Gameplay.Input
                 turnInput = Mathf.Clamp(_wheelAngle / maxWheelAngle, -1f, 1f);
             }
 
+            float accelerate = ReadTrigger(accelerateController);
+            float brake = ReadTrigger(brakeController);
+
+            Oculus.Interaction.Input.IHand hand = GetTrackedPedalHand();
+            if (hand != null)
+            {
+                accelerate = Mathf.Max(accelerate, ReadFingerCurl(hand, accelerateFinger, accelerateCurlRange));
+                brake = Mathf.Max(brake, ReadFingerCurl(hand, brakeFinger, brakeCurlRange));
+            }
+
             return new KartGame.KartSystems.InputData
             {
-                Accelerate = ReadTrigger(accelerateController),
-                Brake = ReadTrigger(brakeController),
+                Accelerate = accelerate,
+                Brake = brake,
                 TurnInput = turnInput
             };
+        }
+
+        // The tracked (not controller-driven) pedal hand while it is holding the wheel, or null otherwise.
+        private Oculus.Interaction.Input.IHand GetTrackedPedalHand()
+        {
+            if (_handInteractors == null || (OVRInput.GetActiveController() & OVRInput.Controller.Hands) == 0)
+            {
+                return null;
+            }
+
+            foreach (var interactor in _handInteractors)
+            {
+                Oculus.Interaction.Input.IHand hand = interactor != null ? interactor.Hand : null;
+                if (hand != null && hand.Handedness == pedalHand && hand.IsConnected && hand.IsTrackedDataValid &&
+                    IsWheelInteractable(interactor.SelectedInteractable))
+                {
+                    return hand;
+                }
+            }
+
+            return null;
+        }
+
+        // Finger curl as 0..1, where curlRange.x degrees is released and curlRange.y is fully pressed.
+        private static float ReadFingerCurl(Oculus.Interaction.Input.IHand hand, Oculus.Interaction.Input.HandFinger finger, Vector2 curlRange)
+        {
+            float curl = Oculus.Interaction.PoseDetection.FingerFeatureStateProvider.DefaultFingerShapes.GetCurlValue(finger, hand);
+            return Mathf.Clamp01(Mathf.InverseLerp(curlRange.x, curlRange.y, curl));
         }
 
         // Index trigger as 0..1 with the deadzone removed and the remaining travel rescaled to the full range.
