@@ -8,22 +8,15 @@ namespace XrRacing.Gameplay.Input
         [SerializeField] private Vector3 wheelSpinAxis = Vector3.right;
         [Tooltip("Wheel angle (degrees) for full steering lock. The wheel is also physically stopped at this angle.")]
         [SerializeField] private float maxWheelAngle = 90f;
-        [Tooltip("Controller whose index trigger is the gas pedal.")]
-        [SerializeField] private OVRInput.Controller accelerateController = OVRInput.Controller.RTouch;
-        [Tooltip("Controller whose index trigger is the brake / reverse pedal.")]
-        [SerializeField] private OVRInput.Controller brakeController = OVRInput.Controller.LTouch;
+        // Which finger works which pedal comes from DriverSettings (per hand/controller: index and thumb).
+        // Controllers: index = index trigger (analog), thumb = A / X button.
+        // Hand tracking: finger curl, only while that hand is holding the wheel.
         [Tooltip("Trigger travel ignored at the start, so resting a finger on it doesn't drive.")]
         [SerializeField, Range(0f, 0.5f)] private float triggerDeadzone = 0.05f;
-        [Tooltip("Hand-tracked hand whose finger curls act as the pedals.")]
-        [SerializeField] private Oculus.Interaction.Input.Handedness pedalHand = Oculus.Interaction.Input.Handedness.Right;
-        [Tooltip("Finger curled for gas when using hand tracking.")]
-        [SerializeField] private Oculus.Interaction.Input.HandFinger accelerateFinger = Oculus.Interaction.Input.HandFinger.Index;
-        [Tooltip("Gas finger curl in degrees: x = released, y = fully pressed.")]
-        [SerializeField] private Vector2 accelerateCurlRange = new Vector2(200f, 240f);
-        [Tooltip("Finger curled for brake / reverse when using hand tracking.")]
-        [SerializeField] private Oculus.Interaction.Input.HandFinger brakeFinger = Oculus.Interaction.Input.HandFinger.Thumb;
-        [Tooltip("Brake finger curl in degrees: x = released, y = fully pressed.")]
-        [SerializeField] private Vector2 brakeCurlRange = new Vector2(190f, 210f);
+        [Tooltip("Hand tracking: index finger curl in degrees mapped to its pedal, x = released, y = fully pressed.")]
+        [SerializeField] private Vector2 indexCurlRange = new Vector2(200f, 240f);
+        [Tooltip("Hand tracking: thumb curl in degrees mapped to its pedal, x = released, y = fully pressed.")]
+        [SerializeField] private Vector2 thumbCurlRange = new Vector2(190f, 210f);
         [Tooltip("Grabbable on the wheel; used to detect release. Defaults to the one on Wheel Transform.")]
         [SerializeField] private Oculus.Interaction.Grabbable wheelGrabbable;
         [Tooltip("Degrees per second the wheel turns back to center after it is released. 0 disables.")]
@@ -343,15 +336,18 @@ namespace XrRacing.Gameplay.Input
                 $"active={OVRInput.GetActiveController()} " +
                 $"L[{DescribeController(OVRInput.Controller.LTouch)}] R[{DescribeController(OVRInput.Controller.RTouch)}]");
 
-            Oculus.Interaction.Input.IHand hand = GetTrackedPedalHand();
-            if (hand != null)
+            var shapes = Oculus.Interaction.PoseDetection.FingerFeatureStateProvider.DefaultFingerShapes;
+            foreach (var handedness in new[] { Oculus.Interaction.Input.Handedness.Left, Oculus.Interaction.Input.Handedness.Right })
             {
-                var shapes = Oculus.Interaction.PoseDetection.FingerFeatureStateProvider.DefaultFingerShapes;
-                WheelDebugLog.Write("Hand", "PedalCurl", selecting, grabPoints, _wheelAngle,
-                    $"{accelerateFinger}={WheelDebugLog.F(shapes.GetCurlValue(accelerateFinger, hand))} " +
-                    $"{brakeFinger}={WheelDebugLog.F(shapes.GetCurlValue(brakeFinger, hand))} " +
-                    $"gas={WheelDebugLog.F(ReadFingerCurl(hand, accelerateFinger, accelerateCurlRange))} " +
-                    $"brake={WheelDebugLog.F(ReadFingerCurl(hand, brakeFinger, brakeCurlRange))}");
+                Oculus.Interaction.Input.IHand hand = GetHandHoldingWheel(handedness);
+                if (hand != null)
+                {
+                    WheelDebugLog.Write("Hand", "PedalCurl", selecting, grabPoints, _wheelAngle,
+                        $"{handedness} index={WheelDebugLog.F(shapes.GetCurlValue(Oculus.Interaction.Input.HandFinger.Index, hand))} " +
+                        $"thumb={WheelDebugLog.F(shapes.GetCurlValue(Oculus.Interaction.Input.HandFinger.Thumb, hand))} " +
+                        $"indexPedal={WheelDebugLog.F(ReadFingerCurl(hand, Oculus.Interaction.Input.HandFinger.Index, indexCurlRange))} " +
+                        $"thumbPedal={WheelDebugLog.F(ReadFingerCurl(hand, Oculus.Interaction.Input.HandFinger.Thumb, thumbCurlRange))}");
+                }
             }
         }
 
@@ -403,14 +399,17 @@ namespace XrRacing.Gameplay.Input
                 turnInput = Mathf.Clamp(_wheelAngle / maxWheelAngle, -1f, 1f);
             }
 
-            float accelerate = ReadTrigger(accelerateController);
-            float brake = ReadTrigger(brakeController);
+            float accelerate = 0f;
+            float brake = 0f;
 
-            Oculus.Interaction.Input.IHand hand = GetTrackedPedalHand();
-            if (hand != null)
+            // No pedals while the settings menu is open, so poking the panel doesn't drive.
+            if (!XrRacing.Gameplay.UI.DriverSettingsMenu.IsOpen)
             {
-                accelerate = Mathf.Max(accelerate, ReadFingerCurl(hand, accelerateFinger, accelerateCurlRange));
-                brake = Mathf.Max(brake, ReadFingerCurl(hand, brakeFinger, brakeCurlRange));
+                var settings = XrRacing.Gameplay.Settings.DriverSettings.Current;
+                AddSidePedals(Oculus.Interaction.Input.Handedness.Left, OVRInput.Controller.LTouch,
+                    settings.LeftIndex, settings.LeftThumb, ref accelerate, ref brake);
+                AddSidePedals(Oculus.Interaction.Input.Handedness.Right, OVRInput.Controller.RTouch,
+                    settings.RightIndex, settings.RightThumb, ref accelerate, ref brake);
             }
 
             return new KartGame.KartSystems.InputData
@@ -421,8 +420,39 @@ namespace XrRacing.Gameplay.Input
             };
         }
 
-        // The tracked (not controller-driven) pedal hand while it is holding the wheel, or null otherwise.
-        private Oculus.Interaction.Input.IHand GetTrackedPedalHand()
+        // Adds one side's index and thumb inputs (controller, or tracked hand holding the wheel) to their mapped pedals.
+        private void AddSidePedals(Oculus.Interaction.Input.Handedness handedness, OVRInput.Controller controller,
+            XrRacing.Gameplay.Settings.PedalAction indexAction, XrRacing.Gameplay.Settings.PedalAction thumbAction,
+            ref float accelerate, ref float brake)
+        {
+            float index = ReadTrigger(controller);
+            float thumb = OVRInput.Get(OVRInput.Button.One, controller) ? 1f : 0f;
+
+            Oculus.Interaction.Input.IHand hand = GetHandHoldingWheel(handedness);
+            if (hand != null)
+            {
+                index = Mathf.Max(index, ReadFingerCurl(hand, Oculus.Interaction.Input.HandFinger.Index, indexCurlRange));
+                thumb = Mathf.Max(thumb, ReadFingerCurl(hand, Oculus.Interaction.Input.HandFinger.Thumb, thumbCurlRange));
+            }
+
+            AddToPedal(indexAction, index, ref accelerate, ref brake);
+            AddToPedal(thumbAction, thumb, ref accelerate, ref brake);
+        }
+
+        private static void AddToPedal(XrRacing.Gameplay.Settings.PedalAction action, float value, ref float accelerate, ref float brake)
+        {
+            if (action == XrRacing.Gameplay.Settings.PedalAction.Brake)
+            {
+                brake = Mathf.Max(brake, value);
+            }
+            else
+            {
+                accelerate = Mathf.Max(accelerate, value);
+            }
+        }
+
+        // The tracked (not controller-driven) hand on that side while it is holding the wheel, or null otherwise.
+        private Oculus.Interaction.Input.IHand GetHandHoldingWheel(Oculus.Interaction.Input.Handedness handedness)
         {
             if (_handInteractors == null || (OVRInput.GetActiveController() & OVRInput.Controller.Hands) == 0)
             {
@@ -432,7 +462,7 @@ namespace XrRacing.Gameplay.Input
             foreach (var interactor in _handInteractors)
             {
                 Oculus.Interaction.Input.IHand hand = interactor != null ? interactor.Hand : null;
-                if (hand != null && hand.Handedness == pedalHand && hand.IsConnected && hand.IsTrackedDataValid &&
+                if (hand != null && hand.Handedness == handedness && hand.IsConnected && hand.IsTrackedDataValid &&
                     IsWheelInteractable(interactor.SelectedInteractable))
                 {
                     return hand;

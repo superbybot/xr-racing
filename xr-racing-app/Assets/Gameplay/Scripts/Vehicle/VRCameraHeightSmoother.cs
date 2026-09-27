@@ -15,6 +15,12 @@ namespace XrRacing.Gameplay.Vehicle
         private float _smoothedY;
         private float _velocity;
 
+        /// <summary>The rig's local position as placed in the scene, before any seat offset.</summary>
+        public Vector3 BaseLocalPosition => _baseLocalPosition;
+
+        /// <summary>Extra local offset for seat adjustment (see DriverSeatAdjuster), applied on top of the base position.</summary>
+        public Vector3 SeatOffset { get; set; }
+
         private void Awake()
         {
             if (followTarget == null)
@@ -42,13 +48,13 @@ namespace XrRacing.Gameplay.Vehicle
             float offset = Mathf.Clamp(_smoothedY - targetY, -maxOffset, maxOffset);
             _smoothedY = targetY + offset;
 
-            transform.localPosition = _baseLocalPosition;
+            transform.localPosition = _baseLocalPosition + SeatOffset;
             transform.position += Vector3.up * offset;
         }
 
         private void OnDisable()
         {
-            transform.localPosition = _baseLocalPosition;
+            transform.localPosition = _baseLocalPosition + SeatOffset;
         }
     }
 }

@@ -31,7 +31,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-namespace XRRacing.SdkPatches
+namespace XrRacing.Gameplay.SdkPatches
 {
     internal static class SampleSceneGroupDataFix
     {

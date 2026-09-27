@@ -92,7 +92,18 @@ env -u OPENAI_BASE_URL OPENAI_API_BASE=http://localhost:1234/v1 OPENAI_API_KEY=d
   --message "<precise instruction: what to change and why>" \
   <file1> <file2> ...
 ```
-(On Windows, set the same env vars in the shell's own syntax; same flags.)
+(On Windows PowerShell, set the same env vars in PowerShell syntax and add `--no-pretty` to avoid xterm console errors):
+```powershell
+$env:OPENAI_API_BASE="http://localhost:1234/v1"
+$env:OPENAI_API_KEY="dummy"
+Remove-Item Env:\OPENAI_BASE_URL -ErrorAction SilentlyContinue
+aider --yes-always --no-auto-commits --no-git --no-show-model-warnings `
+  --no-check-update --no-show-release-notes --no-pretty `
+  --edit-format diff `
+  --model openai/<model-name> `
+  --message "<precise instruction: what to change and why>" `
+  <file1> <file2> ...
+```
 
 - Always unset `OPENAI_BASE_URL` and set `OPENAI_API_BASE=http://localhost:1234/v1`
   explicitly — litellm prefers `OPENAI_BASE_URL`, and the LAN IP in the user's

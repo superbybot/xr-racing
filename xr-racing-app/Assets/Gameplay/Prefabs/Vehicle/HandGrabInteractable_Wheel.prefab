@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 2929723532085396614}
   - component: {fileID: 3311396583626703207}
   m_Layer: 0
-  m_Name: HandGrabInteractable 1
+  m_Name: HandGrabInteractable_Wheel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -52,7 +52,7 @@ MonoBehaviour:
   _data: {fileID: 2929723532085396614}
   _pointableElement: {fileID: 0}
   _rigidbody: {fileID: 0}
-  _resetGrabOnGrabsUpdated: 1
+  _resetGrabOnGrabsUpdated: 0
   _scoringModifier:
     _positionRotationWeight: 0.8
   _slippiness: 0
@@ -177,7 +177,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 991110644077347486}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.000000059604616, y: -0.0000000037252885, z: 0.000000029802308, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0.000000009313227, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0

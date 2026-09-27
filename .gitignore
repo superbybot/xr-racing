@@ -112,3 +112,11 @@ InitTestScene*.unity*
 /xr-racing-app/Builds
 /xr-racing-app/Assets/_Recovery
 xr-racing-app/Assets/_Recovery.meta
+/xr-racing-app/build
+/xr-racing-app/builds
+/xr-racing-app/Asset Bundles
+/builds
+
+# AI assistant session and local configs
+.aider*
+.claude/settings.local.json

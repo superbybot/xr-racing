@@ -36,8 +36,11 @@ namespace XrRacing.Gameplay.Input
                 _previousGrabVectors.Add(GrabVectorOnPlane(grabPoint, axis));
             }
 
-            WheelDebugLog.Write("Transformer", "Begin", -1, _grabbable.GrabPoints.Count, float.NaN,
-                $"localEuler={_grabbable.Transform.localEulerAngles} vectors={string.Join(" | ", _previousGrabVectors)}");
+            if (WheelDebugLog.Enabled)
+            {
+                WheelDebugLog.Write("Transformer", "Begin", -1, _grabbable.GrabPoints.Count, float.NaN,
+                    $"localEuler={_grabbable.Transform.localEulerAngles} vectors={string.Join(" | ", _previousGrabVectors)}");
+            }
         }
 
         public void UpdateTransform()
@@ -48,7 +51,8 @@ namespace XrRacing.Gameplay.Input
 
             float angleSum = 0f;
             int count = 0;
-            string perHand = "";
+            bool logging = WheelDebugLog.Enabled;
+            string perHand = null;
 
             for (int i = 0; i < grabPoints.Count && i < _previousGrabVectors.Count; i++)
             {
@@ -62,9 +66,12 @@ namespace XrRacing.Gameplay.Input
                     float handDelta = Vector3.SignedAngle(previous, current, axis);
                     angleSum += handDelta;
                     count++;
-                    perHand += $"h{i}={WheelDebugLog.F(handDelta)}(r={WheelDebugLog.F(current.magnitude)}) ";
+                    if (logging)
+                    {
+                        perHand += $"h{i}={WheelDebugLog.F(handDelta)}(r={WheelDebugLog.F(current.magnitude)}) ";
+                    }
                 }
-                else
+                else if (logging)
                 {
                     perHand += $"h{i}=skipped(r={WheelDebugLog.F(current.magnitude)}) ";
                 }
@@ -72,22 +79,28 @@ namespace XrRacing.Gameplay.Input
                 _previousGrabVectors[i] = current;
             }
 
-            Vector3 eulerBefore = wheel.localEulerAngles;
+            Vector3 eulerBefore = logging ? wheel.localEulerAngles : Vector3.zero;
 
             if (count > 0)
             {
                 wheel.localRotation = Quaternion.AngleAxis(angleSum / count, axis) * wheel.localRotation;
             }
 
-            WheelDebugLog.Write("Transformer", "Update", -1, grabPoints.Count, float.NaN,
-                $"{perHand}applied={WheelDebugLog.F(count > 0 ? angleSum / count : 0f)} " +
-                $"prevVectors={_previousGrabVectors.Count} eulerBefore={eulerBefore} eulerAfter={wheel.localEulerAngles}");
+            if (logging)
+            {
+                WheelDebugLog.Write("Transformer", "Update", -1, grabPoints.Count, float.NaN,
+                    $"{perHand}applied={WheelDebugLog.F(count > 0 ? angleSum / count : 0f)} " +
+                    $"prevVectors={_previousGrabVectors.Count} eulerBefore={eulerBefore} eulerAfter={wheel.localEulerAngles}");
+            }
         }
 
         public void EndTransform()
         {
             _previousGrabVectors.Clear();
-            WheelDebugLog.Write("Transformer", "End", -1, _grabbable.GrabPoints.Count, float.NaN);
+            if (WheelDebugLog.Enabled)
+            {
+                WheelDebugLog.Write("Transformer", "End", -1, _grabbable.GrabPoints.Count, float.NaN);
+            }
         }
 
         // Spin axis expressed in the wheel's parent space.
