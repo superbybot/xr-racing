@@ -22,7 +22,7 @@ namespace XrRacing.Gameplay.Input
         [Tooltip("Degrees per second the wheel turns back to center after it is released. 0 disables.")]
         [SerializeField] private float returnSpeed = 360f;
         [Tooltip("Temporary: write wheel rotation to Logs/wheel_debug.csv while the wheel is held or returning.")]
-        [SerializeField] private bool debugLog = true;
+        [SerializeField] private bool debugLog = false;
 
         private Quaternion _originRotation;
         private float _wheelAngle;
@@ -147,14 +147,15 @@ namespace XrRacing.Gameplay.Input
                 $"handsL={OVRInput.IsControllerConnected(OVRInput.Controller.LHand)} handsR={OVRInput.IsControllerConnected(OVRInput.Controller.RHand)} " +
                 $"touchL={OVRInput.IsControllerConnected(OVRInput.Controller.LTouch)} touchR={OVRInput.IsControllerConnected(OVRInput.Controller.RTouch)} |";
 
-            foreach (var interactor in FindObjectsByType<Oculus.Interaction.HandGrab.HandGrabInteractor>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            if (_handInteractors != null)
             {
-                status += $" {DescribeInteractor(interactor, interactor.State.ToString())}";
-            }
-
-            foreach (var interactor in FindObjectsByType<Oculus.Interaction.GrabInteractor>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-            {
-                status += $" {DescribeInteractor(interactor, interactor.State.ToString())}";
+                foreach (var interactor in _handInteractors)
+                {
+                    if (interactor != null)
+                    {
+                        status += $" {DescribeInteractor(interactor, interactor.State.ToString())}";
+                    }
+                }
             }
 
             if (status != _lastStatus)

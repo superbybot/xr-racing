@@ -6,12 +6,13 @@ using UnityEngine;
 namespace XrRacing.Gameplay.Input
 {
     /// <summary>
-    /// Temporary CSV logger for debugging steering wheel rotation. Writes to Logs/wheel_debug.csv in the
-    /// project folder when running in the Editor, or to Application.persistentDataPath on device.
-    /// The file is overwritten each time play starts.
+    /// Temporary CSV logger for debugging steering wheel rotation.
+    /// Only active when the XR_WHEEL_DEBUG scripting define symbol is set
+    /// (Project Settings → Player → Scripting Define Symbols).
     /// </summary>
     public static class WheelDebugLog
     {
+#if XR_WHEEL_DEBUG
         public static bool Enabled;
 
         private static StreamWriter _writer;
@@ -65,5 +66,12 @@ namespace XrRacing.Gameplay.Input
             _writer?.Dispose();
             _writer = null;
         }
+#else
+        // When XR_WHEEL_DEBUG is not defined, all calls compile away to no-ops.
+        public static bool Enabled => false;
+        public static void Begin() { }
+        public static void Write(string source, string evt, int selecting, int grabPoints, float wheelAngle, string detail = "") { }
+        public static string F(float value) => string.Empty;
+#endif
     }
 }
