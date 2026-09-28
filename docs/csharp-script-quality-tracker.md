@@ -42,32 +42,32 @@ In Standalone VR on Meta Quest, frame drops directly cause simulation sickness a
 | Script | Namespace | LOC | Score | GC Risk | Key Observations & Technical Debt | Action Required |
 | :--- | :--- | :--- | :---: | :---: | :--- | :--- |
 | **`SteeringWheelTransformer.cs`** | `XrRacing.Gameplay.Input` | 114 | **A-** | ✅ Zero | One- or two-hand grab transformer. Hot-path string formatting is guarded behind `WheelDebugLog.Enabled`, eliminating per-frame GC while driving. | Maintain zero-allocation pattern. |
-| **`XRWheelInput.cs`** | `XrRacing.Gameplay.Input` | 504 | **B** | ⚠️ Med | Large God class mixing wheel angle clamping, hand-tracking curl calculations, controller button inputs, private reflection, and heavy CSV logging. | Decouple diagnostics; default `debugLog = false`. |
-| **`WheelDebugLog.cs`** | `XrRacing.Gameplay.Input` | 70 | **C+** | ⚠️ High | Synchronous file I/O with `AutoFlush = true` called directly from the VR update loop. File grew to 3.3MB. | Strip in production builds (`#if UNITY_EDITOR`). |
+| **`XRWheelInput.cs`** | `XrRacing.Gameplay.Input` | 504 | **A-** | ✅ Low | Grabbable wheel input and pedal mapping. `debugLog` defaults to `false`. Hot-path `LogInteractorStatus` uses cached array lookups instead of scene traversal. | Maintain low-allocation pattern. |
+| **`WheelDebugLog.cs`** | `XrRacing.Gameplay.Input` | 75 | **A** | ✅ Zero | Gated behind `#if XR_WHEEL_DEBUG` compiler symbol with zero-cost no-op stubs when undefined. Zero disk I/O in release builds. | Activate only when profiling with custom scripting define. |
 | **`VRCameraHeightSmoother.cs`** | `XrRacing.Gameplay.Vehicle` | 61 | **A** | ✅ Zero | Highly focused, clean `Mathf.SmoothDamp` implementation, handles null targets and disable states gracefully. | None. Exemplary pattern. |
 | **`DriverSeatAdjuster.cs`** | `XrRacing.Gameplay.Vehicle` | 109 | **A-** | ✅ Zero | Robust coordinate space math (`InverseTransformPoint`/`Direction`), correct event pairing with `DriverSettings`. | Excellent. Consider caching parent transform. |
 | **`DriverSettings.cs`** | `XrRacing.Gameplay.Settings` | 103 | **A** | ✅ Low | Clean POCO data model, static change event, and PlayerPrefs persistence with clamp safety. | None. Clean architecture. |
 | **`DriverSettingsMenu.cs`** | `XrRacing.Gameplay.UI` | 184 | **B+** | ✅ Low | Clean UI event routing for VR slider/toggle interactions. Minor static state coupling (`IsOpen`). | Add null checks for UI references in `Awake`. |
 | **`KartKeyboardInput.cs`** | `XrRacing.Gameplay.Input` | 38 | **A** | ✅ Zero | Concise, zero GC, clean struct return for PC testing fallback. | None. |
 | **`CarTeleportAnchor.cs`** | `XrRacing.Gameplay.Vehicle` | 171 | **B+** | ✅ Low | Solid UniTask/R3 implementation for car enter/exit flow; properly disposes subjects in `OnDestroy`. | Complete wiring when locomotion system is added. |
-| **`SceneGroupLoaderDeviceFix.cs`**| `XrRacing.Gameplay.SdkPatches` | 212 | **B** | ⚠️ Low | Necessary reflection workaround for Meta SDK serialization bug on Quest. Well-documented root cause. | Isolate to sample build configurations. |
+| **`SceneGroupLoaderDeviceFix.cs`**| `XrRacing.Gameplay.SdkPatches` | 218 | **B+** | ⚠️ Low | Necessary reflection workaround for Meta SDK serialization bug on Quest. Includes SDK version warning guard. | Isolate to sample build configurations. |
 | **`QuestBuildDeploy.cs`** | *(global / Editor)* | 275 | **A-** | N/A | Reliable batch build script with `try ... finally` application ID restoration and exit code handling. | Keep global signature for CI compatibility. |
 | **`DriverSettingsMenuBuilder.cs`** | *(global / Editor)* | 426 | **B** | N/A | Procedural UI builder using Meta UISet prefabs. Uses hardcoded package paths. | Wrap in Editor namespace or extract constants. |
 | **`CreateSampleBuildProfiles.cs`**| *(global / Editor)* | 58 | **B+** | N/A | Concise editor utility for generating build profile assets. | Wrap in Editor namespace. |
 | **`ArcadeKart.cs`** *(Ported)* | `KartGame.KartSystems` | 603 | **B** | ⚠️ Med | Ported physics controller from Unity Karting Microgame. Complex raycast suspension and wheel friction model. | Maintain as reference port without unneeded edits. |
+| **`KartAgent.cs`** *(Ported)* | `KartGame.AI` | 300 | **B** | ⚠️ Med | Ported ML-Agents Agent driving `ArcadeKart` via `IInput`. Raycast sensors in `CollectObservations`. Clean training vs inferencing mode separation. | Verify sensor raycast allocation overhead in VR; maintain in `KartGame.AI`. |
+| **`DebugCheckpointRay.cs`** | `KartGame.AI` | 35 | **A** | ✅ Zero | Editor Gizmo visualization tool for checkpoint orientations. | None. Clean utility. |
+| **`DebugCheckpointRayEditor.cs`** | `KartGame.AI` | 44 | **A** | N/A | Custom Inspector for `DebugCheckpointRay`. Located in `Assets/Editor/`. | None. Clean editor tool. |
 
 ---
 
 ## 3. High-Priority Quality Debt & Action Plan
 
-### Priority 1: Stop Hot-Path Allocations in `SteeringWheelTransformer.cs`
-- **Issue:** In `UpdateTransform()`, `string perHand = ""` and string interpolations run every single frame that the steering wheel is held, generating several KB of heap garbage per second.
-- **Fix:** Enclose all debug string formatting and `WheelDebugLog.Write` calls within `if (WheelDebugLog.Enabled)`.
+### Priority 1: Stop Hot-Path Allocations in `SteeringWheelTransformer.cs` (RESOLVED)
+- **Status:** Complete. Debug string formatting and logging calls enclosed within `if (WheelDebugLog.Enabled)`.
 
-### Priority 2: Decouple Diagnostics in `XRWheelInput.cs`
-- **Issue:** `XRWheelInput` contains extensive diagnostics (`LogInteractorStatus`, `LogHandGrabAttempts`, reflection into `Oculus.Interaction.HandGrab.HandGrabInteractor._gripCollider`).
-- **Fix:** Ensure `debugLog` defaults to `false`. Wrap reflection lookups and heavy string building in conditional compilation blocks.
+### Priority 2: Decouple Diagnostics in `XRWheelInput.cs` & Harden `WheelDebugLog.cs` (RESOLVED)
+- **Status:** Complete. `debugLog` defaults to `false`. `WheelDebugLog` is gated behind `#if XR_WHEEL_DEBUG` compiler directives with no-op stubs. `LogInteractorStatus()` uses cached `_handInteractors`.
 
-### Priority 3: Add Assembly Definitions (`.asmdef`)
-- **Issue:** Lack of assembly definitions means all gameplay and editor code compiles into `Assembly-CSharp.dll`, forcing full project recompiles on any script touch.
-- **Fix:** Create `XRRacing.Gameplay.asmdef` and `XRRacing.Editor.asmdef`.
+### Priority 3: Add Assembly Definitions (`.asmdef`) (RESOLVED)
+- **Status:** Complete. Created `XrRacing.Gameplay.asmdef` and `XrRacing.Editor.asmdef` with explicit SDK references. Project compiles with zero errors.
