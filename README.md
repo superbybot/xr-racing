@@ -17,7 +17,7 @@ VR kart racing for Meta Quest, built with Unity 6.
   - **Pedal & Input Abstraction:** Configurable finger trigger and face button mapping for throttle and brake (`DriverSettings`).
   - **Driver Ergonomics:** In-VR floating Driver Settings panel (`DriverSettingsMenu`) allowing seat height, distance, and recentering adjustments in real-time.
   - **Camera Stabilization:** Dynamic VR camera height smoothing (`VRCameraHeightSmoother`) to filter out suspension bounce and terrain jitter.
-  - **PC Editor Fallback:** Keyboard input support (`KartKeyboardInput`) for rapid editor iteration without needing a headset.
+  - **PC Editor Fallback:** Keyboard input support (`KartKeyboardInput`) and dedicated test scene (`DrivingPrototype_PC.unity`) for rapid local iteration without needing a headset.
 - **Reference Assets (`Assets/References/`):**
   - `Assets/References/Karting Reference/`: Ported from Unity's Karting Microgame (models, audio, tracks, and physics components).
   - `Assets/References/Input Reference/`: Grabbable cockpit rig and steering wheel meshes.
