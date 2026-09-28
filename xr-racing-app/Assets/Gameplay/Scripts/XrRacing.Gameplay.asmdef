@@ -1,0 +1,25 @@
+{
+    "name": "XrRacing.Gameplay",
+    "rootNamespace": "XrRacing.Gameplay",
+    "references": [
+        "Oculus.Interaction",
+        "Oculus.Interaction.OVR",
+        "Oculus.Interaction.Samples",
+        "Oculus.VR",
+        "Unity.InputSystem",
+        "Unity.TextMeshPro",
+        "Unity.XR.Interaction.Toolkit",
+        "UniTask",
+        "Fusion.Unity",
+        "Unity.ML-Agents"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

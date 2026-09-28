@@ -68,7 +68,7 @@ namespace XrRacing.Gameplay.Input
         }
 #else
         // When XR_WHEEL_DEBUG is not defined, all calls compile away to no-ops.
-        public static bool Enabled => false;
+        public static bool Enabled { get => false; set { } }
         public static void Begin() { }
         public static void Write(string source, string evt, int selecting, int grabPoints, float wheelAngle, string detail = "") { }
         public static string F(float value) => string.Empty;

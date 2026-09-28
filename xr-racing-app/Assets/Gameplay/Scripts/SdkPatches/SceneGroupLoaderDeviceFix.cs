@@ -130,6 +130,12 @@ namespace XrRacing.Gameplay.SdkPatches
 
         private void Awake()
         {
+            string ovrVersion = OVRPlugin.version != null ? OVRPlugin.version.ToString() : "unknown";
+            if (!ovrVersion.StartsWith("1.107") && !ovrVersion.StartsWith("69."))
+            {
+                Debug.LogWarning($"[SceneGroupLoaderDeviceFix] Workaround was verified for Meta XR SDK 69 / OVRPlugin 1.107. Current version is {ovrVersion}. Verify if this SDK patch is still needed.");
+            }
+
             StartCoroutine(FixLoop());
         }
 
