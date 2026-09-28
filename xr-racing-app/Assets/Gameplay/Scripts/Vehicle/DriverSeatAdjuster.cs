@@ -1,5 +1,7 @@
 using System;
 using System.Collections;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 using XrRacing.Gameplay.Settings;
@@ -93,6 +95,15 @@ namespace XrRacing.Gameplay.Vehicle
         /// </summary>
         public void Apply(DriverSettings settings, Action onMoved)
         {
+            Apply(settings, onMoved, false);
+        }
+
+        /// <summary>
+        /// As above; forceFade fades even for a small move, so an action like Recenter always gives visible
+        /// feedback (otherwise a recenter that barely moves the seat looks like nothing happened).
+        /// </summary>
+        public void Apply(DriverSettings settings, Action onMoved, bool forceFade)
+        {
             if (_smoother == null)
             {
                 return;
@@ -109,7 +120,7 @@ namespace XrRacing.Gameplay.Vehicle
             _targetOffset = offset;
             _targetRotation = rotation;
 
-            bool bigMove = Vector3.Distance(_smoother.SeatOffset, offset) > fadeAboveMeters ||
+            bool bigMove = forceFade || Vector3.Distance(_smoother.SeatOffset, offset) > fadeAboveMeters ||
                 Quaternion.Angle(transform.localRotation, rotation) > FadeAboveDegrees;
 
             if (bigMove && isActiveAndEnabled)
@@ -196,6 +207,22 @@ namespace XrRacing.Gameplay.Vehicle
             _fadeMove = null;
         }
 
+        /// <summary>
+        /// Fades the view to black (alpha 1) or back to clear (alpha 0) over Fade Time, using the same fade as a
+        /// Recenter. Used by TrackLoader around a track switch.
+        /// </summary>
+        public async UniTask FadeAsync(float alpha, CancellationToken cancellationToken)
+        {
+            float start = _fade != null ? _fade.color.a : 0f;
+            for (float t = 0f; t < fadeTime; t += Time.unscaledDeltaTime)
+            {
+                SetFade(Mathf.Lerp(start, alpha, t / fadeTime));
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+            }
+
+            SetFade(alpha);
+        }
+
         private IEnumerator FadeTo(float alpha)
         {
             float start = _fade != null ? _fade.color.a : 0f;
@@ -232,7 +259,9 @@ namespace XrRacing.Gameplay.Vehicle
             float distance = (eyeCamera != null ? eyeCamera.nearClipPlane : 0.05f) + 0.02f;
 
             var go = new GameObject("SeatMoveFade", typeof(RectTransform), typeof(Canvas), typeof(Image));
-            go.layer = head.gameObject.layer;
+            // On the menu's draw-on-top layer when it exists, so a fade still covers the menu.
+            int overlay = XrRacing.Gameplay.UI.OverlayLayer.Index;
+            go.layer = overlay >= 0 ? overlay : head.gameObject.layer;
             go.transform.SetParent(head, false);
             go.transform.localPosition = new Vector3(0f, 0f, distance);
             go.transform.localRotation = Quaternion.identity;

@@ -25,6 +25,21 @@ MonoBehaviour:
   - m_enabled: 1
     m_path: Assets/Gameplay/Scenes/DrivingPrototype_VR.unity
     m_guid: 4bacef10920ec4cf3aac29e415246214
+  - m_enabled: 1
+    m_path: Assets/Gameplay/Scenes/Tracks/Track_Oval.unity
+    m_guid: 417cfa88734566c41831ed19f51dfe1c
+  - m_enabled: 1
+    m_path: Assets/Gameplay/Scenes/Tracks/Track_Winding.unity
+    m_guid: 146f130487530344ba89768e391ad079
+  - m_enabled: 1
+    m_path: Assets/Gameplay/Scenes/Tracks/Track_Country.unity
+    m_guid: dc5e3698cca8def4083beaa341b6721d
+  - m_enabled: 1
+    m_path: Assets/Gameplay/Scenes/Tracks/Track_Mountain.unity
+    m_guid: 197508dc3e8263c47890a629cc6c6948
+  - m_enabled: 1
+    m_path: Assets/Gameplay/Scenes/Tracks/Track_Playground.unity
+    m_guid: 4b194626910b85a43903f0ad0443375f
   m_HasScriptingDefines: 0
   m_ScriptingDefines: []
   m_PlayerSettingsYaml:

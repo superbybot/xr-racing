@@ -21,6 +21,8 @@ namespace XrRacing.Gameplay.Input
         [SerializeField] private Oculus.Interaction.Grabbable wheelGrabbable;
         [Tooltip("Degrees per second the wheel turns back to center after it is released. 0 disables.")]
         [SerializeField] private float returnSpeed = 360f;
+        [Tooltip("Pedals are ignored while this is switching tracks. Optional.")]
+        [SerializeField] private XrRacing.Gameplay.Tracks.TrackLoader trackLoader;
         [Tooltip("Temporary: write wheel rotation to Logs/wheel_debug.csv while the wheel is held or returning.")]
         [SerializeField] private bool debugLog = false;
 
@@ -97,9 +99,9 @@ namespace XrRacing.Gameplay.Input
 
         private void Start()
         {
-            _handInteractors = FindObjectsByType<Oculus.Interaction.HandGrab.HandGrabInteractor>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            _handInteractors = FindObjectsByType<Oculus.Interaction.HandGrab.HandGrabInteractor>(FindObjectsInactive.Include);
             _wheelInteractables = System.Array.FindAll(
-                FindObjectsByType<Oculus.Interaction.HandGrab.HandGrabInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None),
+                FindObjectsByType<Oculus.Interaction.HandGrab.HandGrabInteractable>(FindObjectsInactive.Include),
                 IsWheelInteractable);
 
             if (!WheelDebugLog.Enabled || wheelTransform == null)
@@ -112,7 +114,7 @@ namespace XrRacing.Gameplay.Input
                 wheelGrabbable.WhenPointerEventRaised += LogPointerEvent;
             }
 
-            OVRCameraRig rig = FindFirstObjectByType<OVRCameraRig>();
+            OVRCameraRig rig = FindAnyObjectByType<OVRCameraRig>();
             _trackingSpace = rig != null ? rig.trackingSpace : null;
 
             Renderer wheelRenderer = wheelTransform.GetComponentInChildren<Renderer>();
@@ -403,8 +405,8 @@ namespace XrRacing.Gameplay.Input
             float accelerate = 0f;
             float brake = 0f;
 
-            // No pedals while the settings menu is open, so poking the panel doesn't drive.
-            if (!XrRacing.Gameplay.UI.DriverSettingsMenu.IsOpen)
+            // No pedals while the settings menu is open (so poking the panel doesn't drive) or a track is loading.
+            if (!XrRacing.Gameplay.UI.DriverSettingsMenu.IsOpen && (trackLoader == null || !trackLoader.IsLoading))
             {
                 var settings = XrRacing.Gameplay.Settings.DriverSettings.Current;
                 AddSidePedals(Oculus.Interaction.Input.Handedness.Left, OVRInput.Controller.LTouch,

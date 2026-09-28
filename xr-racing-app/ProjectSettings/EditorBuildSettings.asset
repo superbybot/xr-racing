@@ -8,6 +8,21 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Gameplay/Scenes/DrivingPrototype_VR.unity
     guid: 4bacef10920ec4cf3aac29e415246214
+  - enabled: 1
+    path: Assets/Gameplay/Scenes/Tracks/Track_Oval.unity
+    guid: 417cfa88734566c41831ed19f51dfe1c
+  - enabled: 1
+    path: Assets/Gameplay/Scenes/Tracks/Track_Winding.unity
+    guid: 146f130487530344ba89768e391ad079
+  - enabled: 1
+    path: Assets/Gameplay/Scenes/Tracks/Track_Country.unity
+    guid: dc5e3698cca8def4083beaa341b6721d
+  - enabled: 1
+    path: Assets/Gameplay/Scenes/Tracks/Track_Mountain.unity
+    guid: 197508dc3e8263c47890a629cc6c6948
+  - enabled: 1
+    path: Assets/Gameplay/Scenes/Tracks/Track_Playground.unity
+    guid: 4b194626910b85a43903f0ad0443375f
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

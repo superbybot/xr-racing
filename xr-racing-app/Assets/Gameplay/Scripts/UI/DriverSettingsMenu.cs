@@ -1,8 +1,10 @@
 using System;
+using Oculus.Interaction;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using XrRacing.Gameplay.Settings;
+using XrRacing.Gameplay.Tracks;
 using XrRacing.Gameplay.Vehicle;
 
 namespace XrRacing.Gameplay.UI
@@ -56,19 +58,20 @@ namespace XrRacing.Gameplay.UI
                     _brakeLabel.color = brake.isOn ? selectedColor : _offColor;
                 }
             }
+        }
 
-            private static TMP_Text FindLabel(Toggle toggle)
+        // The UISet toggle tile's main text.
+        private static TMP_Text FindLabel(Toggle toggle)
+        {
+            foreach (TMP_Text text in toggle.GetComponentsInChildren<TMP_Text>(true))
             {
-                foreach (TMP_Text text in toggle.GetComponentsInChildren<TMP_Text>(true))
+                if (text.name == "Label")
                 {
-                    if (text.name == "Label")
-                    {
-                        return text;
-                    }
+                    return text;
                 }
-
-                return null;
             }
+
+            return null;
         }
 
         [Tooltip("The panel shown/hidden by the menu button. Must not be this GameObject.")]
@@ -84,7 +87,11 @@ namespace XrRacing.Gameplay.UI
         [SerializeField] private PedalSelector rightIndex;
         [SerializeField] private PedalSelector rightThumb;
         [SerializeField] private Button resetButton;
-        [Tooltip("Text color of the selected Accel/Brake option.")]
+        [Tooltip("Switches tracks when a track tile is picked.")]
+        [SerializeField] private TrackLoader trackLoader;
+        [Tooltip("One tile per TrackLoader track, in the same order.")]
+        [SerializeField] private Toggle[] trackToggles = new Toggle[0];
+        [Tooltip("Text color of the selected Accel/Brake and track option.")]
         [SerializeField] private Color selectedTextColor = Color.white;
         [Tooltip("How far in front of the head the panel sits (meters).")]
         [SerializeField] private float distanceFromHead = 0.5f;
@@ -96,10 +103,17 @@ namespace XrRacing.Gameplay.UI
         [SerializeField] private float followDistance = 0.2f;
         [Tooltip("Seconds the panel takes to catch up while following.")]
         [SerializeField] private float followTime = 0.3f;
+        [Tooltip("Following stops once the panel is this close (meters) to its spot in front of the head...")]
+        [SerializeField, Min(0f)] private float followSettleDistance = 0.05f;
+        [Tooltip("...and turned within this many degrees of facing the head.")]
+        [SerializeField, Min(0f)] private float followSettleAngle = 5f;
 
         private DriverSettings _settings;
         private bool _following;
         private Vector3 _followVelocity;
+        private TMP_Text[] _trackLabels = new TMP_Text[0];
+        private Color _trackOffColor = Color.white;
+        private IInteractableView[] _panelInteractables = new IInteractableView[0];
 
         /// <summary>True while the panel is showing; the kart ignores pedals meanwhile.</summary>
         public static bool IsOpen { get; private set; }
@@ -114,11 +128,27 @@ namespace XrRacing.Gameplay.UI
             leftThumb.Init(OnPedalsChanged);
             rightIndex.Init(OnPedalsChanged);
             rightThumb.Init(OnPedalsChanged);
+            InitTrackToggles();
+            _panelInteractables = panel.GetComponentsInChildren<IInteractableView>(true); // the panel's ray and poke targets
+            DrawOnTop();
             panel.SetActive(false);
+        }
+
+        private void OnEnable()
+        {
+            if (trackLoader != null)
+            {
+                trackLoader.TrackChanged += ShowTrack;
+            }
         }
 
         private void OnDisable()
         {
+            if (trackLoader != null)
+            {
+                trackLoader.TrackChanged -= ShowTrack;
+            }
+
             IsOpen = false;
         }
 
@@ -149,6 +179,7 @@ namespace XrRacing.Gameplay.UI
             leftThumb.UpdateLabelColors(selectedTextColor);
             rightIndex.UpdateLabelColors(selectedTextColor);
             rightThumb.UpdateLabelColors(selectedTextColor);
+            UpdateTrackLabelColors();
             FollowHead();
         }
 
@@ -156,6 +187,7 @@ namespace XrRacing.Gameplay.UI
         {
             _settings = DriverSettings.Current.Clone();
             ShowSettings();
+            ShowTrack(trackLoader != null ? trackLoader.CurrentIndex : -1);
 
             PlaceInFrontOfHead();
             panel.SetActive(true);
@@ -206,8 +238,9 @@ namespace XrRacing.Gameplay.UI
                 _settings.Distance = DriverSettings.DefaultStep;
                 ShowSettings();
 
-                // Recenter is usually a big move, so it fades; the panel is re-placed in the new view while black.
-                seat.Apply(_settings, PlaceInFrontOfHead);
+                // Always fades (even when the seat barely moves) so every press visibly does something; the panel
+                // is re-placed in the new view while black.
+                seat.Apply(_settings, PlaceInFrontOfHead, true);
                 DriverSettings.Save(_settings);
             }
         }
@@ -217,6 +250,49 @@ namespace XrRacing.Gameplay.UI
             _settings.ResetToDefaults();
             ShowSettings();
             DriverSettings.Save(_settings);
+        }
+
+        private void InitTrackToggles()
+        {
+            _trackLabels = new TMP_Text[trackToggles.Length];
+            for (int i = 0; i < trackToggles.Length; i++)
+            {
+                int index = i;
+                _trackLabels[i] = FindLabel(trackToggles[i]);
+                // A toggle group fires for both the one turning off and the one turning on; react once.
+                trackToggles[i].onValueChanged.AddListener(isOn =>
+                {
+                    if (isOn && trackLoader != null)
+                    {
+                        trackLoader.RequestTrack(index);
+                    }
+                });
+            }
+
+            if (_trackLabels.Length > 0 && _trackLabels[0] != null)
+            {
+                _trackOffColor = _trackLabels[0].color;
+            }
+        }
+
+        // Marks the loaded track's tile (also re-syncs after a pick was ignored because a switch was running).
+        private void ShowTrack(int index)
+        {
+            for (int i = 0; i < trackToggles.Length; i++)
+            {
+                trackToggles[i].SetIsOnWithoutNotify(i == index);
+            }
+        }
+
+        private void UpdateTrackLabelColors()
+        {
+            for (int i = 0; i < _trackLabels.Length; i++)
+            {
+                if (_trackLabels[i] != null)
+                {
+                    _trackLabels[i].color = trackToggles[i].isOn ? selectedTextColor : _trackOffColor;
+                }
+            }
         }
 
         private void UpdateValueLabels()
@@ -260,7 +336,8 @@ namespace XrRacing.Gameplay.UI
             return true;
         }
 
-        // Opens facing the player, parented to the kart so it rides along while driving.
+        // Opens facing the player, parented to the camera rig: the same space as the controllers and hands, so the
+        // rig's bounce smoothing (VRCameraHeightSmoother) doesn't shift the panel relative to the pointing ray.
         private void PlaceInFrontOfHead()
         {
             if (!GetTargetPose(out Vector3 position, out Quaternion rotation))
@@ -268,9 +345,9 @@ namespace XrRacing.Gameplay.UI
                 return;
             }
 
-            if (seat != null && seat.transform.parent != null)
+            if (seat != null)
             {
-                panel.transform.SetParent(seat.transform.parent, true);
+                panel.transform.SetParent(seat.transform, true);
             }
 
             panel.transform.SetPositionAndRotation(position, rotation);
@@ -279,10 +356,17 @@ namespace XrRacing.Gameplay.UI
         }
 
         // Lazy follow: the panel holds still while it's roughly in view (so it's easy to poke), and glides back
-        // in front of the head once the player looks or moves away. Smoothed in the kart's space so driving
-        // doesn't make it trail behind.
+        // in front of the head once the player looks or moves away. Smoothed in the rig's space so driving
+        // doesn't make it trail behind. Never moves while a ray or poke is on it.
         private void FollowHead()
         {
+            if (IsBeingPointedAt())
+            {
+                _following = false;
+                _followVelocity = Vector3.zero;
+                return;
+            }
+
             Transform head = GetHead();
             if (head == null || !GetTargetPose(out Vector3 targetPosition, out Quaternion targetRotation))
             {
@@ -314,10 +398,43 @@ namespace XrRacing.Gameplay.UI
             panelTransform.rotation = Quaternion.Slerp(panelTransform.rotation, targetRotation,
                 1f - Mathf.Exp(-Time.deltaTime / Mathf.Max(0.01f, followTime * 0.5f)));
 
-            if (Vector3.Distance(local, targetLocal) < 0.01f)
+            // Stop once roughly in place rather than chasing every small head movement.
+            if (Vector3.Distance(local, targetLocal) < followSettleDistance &&
+                Quaternion.Angle(panelTransform.rotation, targetRotation) < followSettleAngle)
             {
                 _following = false;
+                _followVelocity = Vector3.zero;
             }
+        }
+
+        // The panel and the pointer rays (their line and cursor) go on the overlay layer, which is drawn over the kart
+        // and track; otherwise the cursor dot on the panel would be hidden under it.
+        private void DrawOnTop()
+        {
+            OverlayLayer.Apply(panel);
+
+            foreach (MonoBehaviour visual in FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include))
+            {
+                if (visual is ControllerRayVisual || visual is RayInteractorRayVisual || visual is RayInteractorCursorVisual ||
+                    visual is HandRayInteractorCursorVisual || visual is RayInteractorPinchVisual)
+                {
+                    OverlayLayer.Apply(visual.gameObject);
+                }
+            }
+        }
+
+        // True while any ray or poke is hovering or pressing the panel.
+        private bool IsBeingPointedAt()
+        {
+            foreach (IInteractableView view in _panelInteractables)
+            {
+                if (view.State == InteractableState.Hover || view.State == InteractableState.Select)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }
