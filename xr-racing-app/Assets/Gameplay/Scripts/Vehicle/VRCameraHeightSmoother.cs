@@ -3,10 +3,13 @@ using UnityEngine;
 namespace XrRacing.Gameplay.Vehicle
 {
     /// <summary>
-    /// Keeps the kart's small, fast motion out of the VR view. The camera rig still follows the kart's position and
-    /// steering, but its world height is low-pass filtered (suspension bounce) and so is its tilt (pitch and roll):
-    /// fast wobble such as the suspension buzzing is filtered out, while slow tilts like hills and banked turns come
-    /// through. The rig's own seat pose (SeatOffset / SeatRotation, set by DriverSeatAdjuster) is applied underneath.
+    /// Keeps the kart's tilt and small, fast motion out of the VR view. The camera rig still follows the kart's
+    /// position and steering, but:
+    ///   - Horizon Lock keeps the view level with the world while the kart pitches and rolls (ramps, slopes), so
+    ///     the kart tilts around the player instead of the world tilting in front of them. 1 = fully level.
+    ///   - Whatever tilt Horizon Lock lets through is lightly low-pass filtered (suspension buzz).
+    ///   - World height is low-pass filtered (suspension bounce).
+    /// The rig's own seat pose (SeatOffset / SeatRotation, set by DriverSeatAdjuster) is applied underneath.
     /// </summary>
     public class VRCameraHeightSmoother : MonoBehaviour
     {
@@ -16,16 +19,28 @@ namespace XrRacing.Gameplay.Vehicle
         [SerializeField, Min(0f)] private float smoothTime = 0.12f;
         [Tooltip("Max meters the view may lag the kart vertically.")]
         [SerializeField, Min(0f)] private float maxOffset = 0.1f;
-        [Tooltip("Seconds the view takes to follow the kart's tilt. Higher filters more wobble but lags more on hills. 0 = no tilt smoothing.")]
-        [SerializeField, Min(0f)] private float tiltSmoothTime = 0.3f;
-        [Tooltip("Max degrees the view may lag the kart's tilt, so big sudden tilts (crashes, ramps) still come through.")]
-        [SerializeField, Range(0f, 45f)] private float maxTiltLag = 10f;
+        [Tooltip("How much the view stays level while the kart pitches and rolls. 1 = always level with the world " +
+            "(most comfortable), 0 = tilts fully with the kart.")]
+        [SerializeField, Range(0f, 1f)] private float horizonLock = 1f;
+        [Tooltip("Seconds the view takes to follow the tilt Horizon Lock lets through; filters suspension buzz. " +
+            "Keep short: a view that keeps rotating after the kart has settled is nauseating. 0 = no smoothing.")]
+        [SerializeField, Min(0f)] private float tiltSmoothTime = 0.1f;
+        [Tooltip("Max degrees the view may lag that tilt, so big sudden tilts (crashes) still come through at once.")]
+        [SerializeField, Range(0f, 45f)] private float maxTiltLag = 5f;
 
         private Vector3 _baseLocalPosition;
         private float _smoothedY;
         private float _velocity;
         private Vector3 _smoothedUp = Vector3.up;
+        private Vector3 _heading = Vector3.forward;
         private Transform _head;
+
+        /// <summary>0..1, see the Horizon Lock tooltip. Settable at runtime (e.g. from a comfort setting).</summary>
+        public float HorizonLock
+        {
+            get => horizonLock;
+            set => horizonLock = Mathf.Clamp01(value);
+        }
 
         /// <summary>The rig's local position as placed in the scene, before any seat offset.</summary>
         public Vector3 BaseLocalPosition => _baseLocalPosition;
@@ -52,7 +67,7 @@ namespace XrRacing.Gameplay.Vehicle
             if (followTarget != null)
             {
                 _smoothedY = followTarget.position.y;
-                _smoothedUp = followTarget.up;
+                _smoothedUp = Vector3.Slerp(followTarget.up, Vector3.up, horizonLock);
             }
         }
 
@@ -73,23 +88,35 @@ namespace XrRacing.Gameplay.Vehicle
             transform.localRotation = SeatRotation;
             transform.position += Vector3.up * offset;
 
-            // Tilt: follow the kart's up direction slowly, and counter-rotate the rig by the difference.
-            Vector3 kartUp = followTarget.up;
+            // Tilt: the view's target orientation is the kart's, leveled toward the world by Horizon Lock (same heading).
+            Quaternion kartRotation = followTarget.rotation;
+            Vector3 flatForward = Vector3.ProjectOnPlane(followTarget.forward, Vector3.up);
+            if (flatForward.sqrMagnitude > 0.0001f) // keep the last heading while the kart points straight up/down
+            {
+                _heading = flatForward.normalized;
+            }
+
+            Quaternion level = Quaternion.LookRotation(_heading, Vector3.up);
+            Quaternion target = Quaternion.Slerp(kartRotation, level, horizonLock);
+            Vector3 targetUp = target * Vector3.up;
+
+            // Lightly smooth the tilt that remains (nothing left to smooth at full lock).
             if (tiltSmoothTime > 0f)
             {
-                _smoothedUp = Vector3.Slerp(_smoothedUp, kartUp, 1f - Mathf.Exp(-Time.deltaTime / tiltSmoothTime));
-                float lag = Vector3.Angle(_smoothedUp, kartUp);
+                _smoothedUp = Vector3.Slerp(_smoothedUp, targetUp, 1f - Mathf.Exp(-Time.deltaTime / tiltSmoothTime));
+                float lag = Vector3.Angle(_smoothedUp, targetUp);
                 if (lag > maxTiltLag)
                 {
-                    _smoothedUp = Vector3.Slerp(kartUp, _smoothedUp, maxTiltLag / lag);
+                    _smoothedUp = Vector3.Slerp(targetUp, _smoothedUp, maxTiltLag / lag);
                 }
             }
             else
             {
-                _smoothedUp = kartUp;
+                _smoothedUp = targetUp;
             }
 
-            Quaternion correction = Quaternion.FromToRotation(kartUp, _smoothedUp);
+            // Counter-rotate the rig from the kart's orientation to the target, plus the (small) smoothing lag.
+            Quaternion correction = Quaternion.FromToRotation(targetUp, _smoothedUp) * target * Quaternion.Inverse(kartRotation);
             if (correction != Quaternion.identity)
             {
                 // Pivot around the head so filtering the tilt doesn't swing the viewpoint.
