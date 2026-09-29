@@ -121,7 +121,7 @@ namespace XrRacing.Gameplay.Vehicle
             _targetRotation = rotation;
 
             bool bigMove = forceFade || Vector3.Distance(_smoother.SeatOffset, offset) > fadeAboveMeters ||
-                Quaternion.Angle(transform.localRotation, rotation) > FadeAboveDegrees;
+                Quaternion.Angle(_smoother.SeatRotation, rotation) > FadeAboveDegrees;
 
             if (bigMove && isActiveAndEnabled)
             {
@@ -135,7 +135,7 @@ namespace XrRacing.Gameplay.Vehicle
             }
 
             // Small move: rotation is unchanged (only Recenter turns the rig), Update glides the offset.
-            transform.localRotation = rotation;
+            _smoother.SeatRotation = rotation; // the smoother applies it (with tilt smoothing) in LateUpdate
             onMoved?.Invoke();
         }
 
@@ -192,7 +192,7 @@ namespace XrRacing.Gameplay.Vehicle
         {
             _glideVelocity = Vector3.zero;
             _smoother.SeatOffset = offset;
-            transform.localRotation = rotation;
+            _smoother.SeatRotation = rotation;
         }
 
         private IEnumerator FadeMove(Vector3 offset, Quaternion rotation, Action onMoved)

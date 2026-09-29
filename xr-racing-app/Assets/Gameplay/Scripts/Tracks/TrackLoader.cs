@@ -39,6 +39,9 @@ namespace XrRacing.Gameplay.Tracks
         [SerializeField, Min(0)] private int defaultTrack;
         [Tooltip("Start on the last track the player picked instead of the default.")]
         [SerializeField] private bool rememberLastTrack = true;
+        [Tooltip("Height of the kart's origin above the ground when it's resting on its wheels (m). The kart is placed " +
+            "at this height over the ground under the spawn, so it doesn't drop onto the track.")]
+        [SerializeField, Min(0f)] private float restHeight = 0.28f;
 
         private CancellationTokenSource _lifetime;
 
@@ -204,7 +207,21 @@ namespace XrRacing.Gameplay.Tracks
             }
 
             Transform spawn = track.PlayerSpawn;
-            kart.transform.SetPositionAndRotation(spawn.position, spawn.rotation);
+            Vector3 position = spawn.position;
+
+            // Set the kart down at its resting height on the ground under the spawn, so it doesn't drop and bounce.
+            RaycastHit[] hits = Physics.RaycastAll(position + Vector3.up * 2f, Vector3.down, 10f, ~0, QueryTriggerInteraction.Ignore);
+            float nearest = float.MaxValue;
+            foreach (RaycastHit hit in hits)
+            {
+                if (!hit.collider.transform.IsChildOf(kart.transform) && hit.distance < nearest)
+                {
+                    nearest = hit.distance;
+                    position.y = hit.point.y + restHeight;
+                }
+            }
+
+            kart.transform.SetPositionAndRotation(position, spawn.rotation);
             Physics.SyncTransforms();
         }
 

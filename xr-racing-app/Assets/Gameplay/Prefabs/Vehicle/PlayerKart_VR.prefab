@@ -4889,7 +4889,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Meta.XR.BuildingBlocks::Meta.XR.BuildingBlocks.BuildingBlock
   blockId: 4e14e0ba-51f2-4a5c-a822-e304bf36d48c
-  instanceId: 50db8b86-a2cb-4244-80a3-74518f8150fc
+  instanceId: bf58c6cc-9cbf-4df5-b5b6-136c2328a62d
   version: 1
   installationRoutineCheckpoint:
     _installationRoutineId: fb25cac7-8f37-455d-ac01-3fa41a1be37d
@@ -13390,7 +13390,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Meta.XR.BuildingBlocks::Meta.XR.BuildingBlocks.BuildingBlock
   blockId: 4e14e0ba-51f2-4a5c-a822-e304bf36d48c
-  instanceId: 86adf8d8-62ab-4362-9754-9a65de67c7be
+  instanceId: 8caf9d4d-6f6f-4e72-a8e1-0238b86eec2c
   version: 1
   installationRoutineCheckpoint:
     _installationRoutineId: fb25cac7-8f37-455d-ac01-3fa41a1be37d
@@ -19482,7 +19482,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Meta.XR.BuildingBlocks::Meta.XR.BuildingBlocks.BuildingBlock
   blockId: e47682b9-c270-40b1-b16d-90b627a5ce1b
-  instanceId: c0241101-797d-440e-af02-19599aa31080
+  instanceId: 079daa21-0e6f-4e9c-b466-55ec3e66cfcf
   version: 1
   installationRoutineCheckpoint:
     _installationRoutineId: 
@@ -22926,6 +22926,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 4810912518991602691, guid: 19954de30401f73428254541a9ad156e, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6367788381193609977}
+    - targetCorrespondingSourceObject: {fileID: 4810912518991602691, guid: 19954de30401f73428254541a9ad156e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6154708090128545671}
     - targetCorrespondingSourceObject: {fileID: 7798798854738731163, guid: 19954de30401f73428254541a9ad156e, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5459907548408918361}
@@ -22978,6 +22981,23 @@ MonoBehaviour:
   trackLoader: {fileID: 0}
   debugLog: 1
   grabDebugRadius: 0.6
+--- !u!114 &6154708090128545671
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6414228595842160886}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 09df507fd1fe4a69b1c55fc28765d88c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: XrRacing.Gameplay::XrRacing.Gameplay.Vehicle.KartMotionDebugLog
+  logRawSamples: 1
+  bounceSpeed: 0.6
+  bounceAcceleration: 25
+  oscillationFlips: 4
+  cameraJitter: 0.01
 --- !u!137 &8645441940991906170 stripped
 SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: 7798798854743944591, guid: 19954de30401f73428254541a9ad156e, type: 3}
@@ -29948,7 +29968,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Meta.XR.BuildingBlocks::Meta.XR.BuildingBlocks.BuildingBlock
   blockId: 81f55626-5fad-45e9-a1df-184f330da7ba
-  instanceId: c06294f3-85f4-49a4-b220-07a435e63a52
+  instanceId: 15173a0d-5da8-474f-8bc6-9ef26a619681
   version: 1
   installationRoutineCheckpoint:
     _installationRoutineId: 2063f481-1b63-4eda-9ee8-a00df98536bc
