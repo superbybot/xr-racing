@@ -40,23 +40,35 @@ In Standalone VR on Meta Quest, frame drops directly cause simulation sickness a
 ## 2. Script Quality Scorecard & Audit
 
 | Script | Namespace | LOC | Score | GC Risk | Key Observations & Technical Debt | Action Required |
-| :--- | :--- | :--- | :---: | :---: | :--- | :--- |
-| **`SteeringWheelTransformer.cs`** | `XrRacing.Gameplay.Input` | 114 | **A-** | ✅ Zero | One- or two-hand grab transformer. Hot-path string formatting is guarded behind `WheelDebugLog.Enabled`, eliminating per-frame GC while driving. | Maintain zero-allocation pattern. |
-| **`XRWheelInput.cs`** | `XrRacing.Gameplay.Input` | 504 | **A-** | ✅ Low | Grabbable wheel input and pedal mapping. `debugLog` defaults to `false`. Hot-path `LogInteractorStatus` uses cached array lookups instead of scene traversal. | Maintain low-allocation pattern. |
-| **`WheelDebugLog.cs`** | `XrRacing.Gameplay.Input` | 75 | **A** | ✅ Zero | Gated behind `#if XR_WHEEL_DEBUG` compiler symbol with zero-cost no-op stubs when undefined. Zero disk I/O in release builds. | Activate only when profiling with custom scripting define. |
-| **`VRCameraHeightSmoother.cs`** | `XrRacing.Gameplay.Vehicle` | 61 | **A** | ✅ Zero | Highly focused, clean `Mathf.SmoothDamp` implementation, handles null targets and disable states gracefully. | None. Exemplary pattern. |
-| **`DriverSeatAdjuster.cs`** | `XrRacing.Gameplay.Vehicle` | 109 | **A-** | ✅ Zero | Robust coordinate space math (`InverseTransformPoint`/`Direction`), correct event pairing with `DriverSettings`. | Excellent. Consider caching parent transform. |
-| **`DriverSettings.cs`** | `XrRacing.Gameplay.Settings` | 103 | **A** | ✅ Low | Clean POCO data model, static change event, and PlayerPrefs persistence with clamp safety. | None. Clean architecture. |
-| **`DriverSettingsMenu.cs`** | `XrRacing.Gameplay.UI` | 184 | **B+** | ✅ Low | Clean UI event routing for VR slider/toggle interactions. Minor static state coupling (`IsOpen`). | Add null checks for UI references in `Awake`. |
-| **`KartKeyboardInput.cs`** | `XrRacing.Gameplay.Input` | 38 | **A** | ✅ Zero | Concise, zero GC, clean struct return for PC testing fallback. | None. |
-| **`SceneGroupLoaderDeviceFix.cs`**| `XrRacing.Gameplay.SdkPatches` | 218 | **B+** | ⚠️ Low | Necessary reflection workaround for Meta SDK serialization bug on Quest. Includes SDK version warning guard. | Isolate to sample build configurations. |
-| **`QuestBuildDeploy.cs`** | *(global / Editor)* | 275 | **A-** | N/A | Reliable batch build script with `try ... finally` application ID restoration and exit code handling. | Keep global signature for CI compatibility. |
-| **`DriverSettingsMenuBuilder.cs`** | *(global / Editor)* | 426 | **B** | N/A | Procedural UI builder using Meta UISet prefabs. Uses hardcoded package paths. | Wrap in Editor namespace or extract constants. |
-| **`CreateSampleBuildProfiles.cs`**| *(global / Editor)* | 58 | **B+** | N/A | Concise editor utility for generating build profile assets. | Wrap in Editor namespace. |
-| **`ArcadeKart.cs`** *(Ported)* | `KartGame.KartSystems` | 603 | **B** | ⚠️ Med | Ported physics controller from Unity Karting Microgame. Complex raycast suspension and wheel friction model. | Maintain as reference port without unneeded edits. |
-| **`KartAgent.cs`** *(Ported)* | `KartGame.AI` | 300 | **B** | ⚠️ Med | Ported ML-Agents Agent driving `ArcadeKart` via `IInput`. Raycast sensors in `CollectObservations`. Clean training vs inferencing mode separation. | Verify sensor raycast allocation overhead in VR; maintain in `KartGame.AI`. |
-| **`DebugCheckpointRay.cs`** | `KartGame.AI` | 35 | **A** | ✅ Zero | Editor Gizmo visualization tool for checkpoint orientations. | None. Clean utility. |
-| **`DebugCheckpointRayEditor.cs`** | `KartGame.AI` | 44 | **A** | N/A | Custom Inspector for `DebugCheckpointRay`. Located in `Assets/Editor/`. | None. Clean editor tool. |
+| :--- | :--- | :---: | :---: | :---: | :--- | :--- |
+| **`SteeringWheelTransformer.cs`** | `XrRacing.Gameplay.Input` | 102 | **A-** | ✅ Zero | One- or two-hand grab transformer. Hot-path string formatting is guarded behind `WheelDebugLog.Enabled`, eliminating per-frame GC while driving. | Maintain zero-allocation pattern. |
+| **`XRWheelInput.cs`** | `XrRacing.Gameplay.Input` | 442 | **A** | ✅ Zero in Prod | Grabbable wheel input and pedal mapping. `debugLog` defaults to `false`. All diagnostics and reflection compiled out in release builds (`#if UNITY_EDITOR \|\| DEVELOPMENT_BUILD`). | Maintain decoupled pattern. |
+| **`WheelDebugLog.cs`** | `XrRacing.Gameplay.Input` | 68 | **A** | ✅ Zero | Gated behind `#if XR_WHEEL_DEBUG` compiler symbol with zero-cost no-op stubs when undefined. Zero disk I/O in release builds. | Activate only when profiling with custom scripting define. |
+| **`KartKeyboardInput.cs`** | `XrRacing.Gameplay.Input` | 32 | **A** | ✅ Zero | Concise, zero GC, clean struct return for PC testing fallback. | None. |
+| **`PhysicsRateMatcher.cs`** | `XrRacing.Gameplay.Vehicle` | 48 | **A+** | ✅ Zero | Dynamically locks physics step rate to Quest display refresh rate (72/90/120 Hz). Zero-allocation, clean event subscription. | None. Exemplary pattern. |
+| **`VRCameraHeightSmoother.cs`** | `XrRacing.Gameplay.Vehicle` | 94 | **A** | ✅ Zero | Low-pass vertical filter & head-pivot tilt smoothing. Filters suspension jitter without swinging viewpoint. | None. Exemplary pattern. |
+| **`DriverSeatAdjuster.cs`** | `XrRacing.Gameplay.Vehicle` | 236 | **A-** | ✅ Zero | Robust coordinate space math (`InverseTransformPoint`/`Direction`), correct event pairing with `DriverSettings` and `TrackLoader` async fades. | Maintain clean event pairing. |
+| **`KartMotionDebugLog.cs`** | `XrRacing.Gameplay.Vehicle` | 239 | **A-** | ✅ Zero in Prod | Diagnostic motion telemetry. Gated behind `#if UNITY_EDITOR \|\| DEVELOPMENT_BUILD`. `AutoFlush = false`, flushes once per second. | None. Safe for production. |
+| **`TrackLoader.cs`** | `XrRacing.Gameplay.Tracks` | 205 | **A** | ✅ Low | Async additive scene switcher with fade transitions. Calls `Resources.UnloadUnusedAssets()` on track unload to prevent RAM leaks. | None. |
+| **`TrackInfo.cs`** | `XrRacing.Gameplay.Tracks` | 36 | **A** | ✅ Zero | Concise POCO MonoBehaviour holding track display name, spawn point, and checkpoints. Gizmos in `#if UNITY_EDITOR`. | None. |
+| **`DriverSettings.cs`** | `XrRacing.Gameplay.Settings` | 97 | **A** | ✅ Low | Clean POCO data model, static change event, and PlayerPrefs persistence with clamp safety. | None. Clean architecture. |
+| **`DriverSettingsMenu.cs`** | `XrRacing.Gameplay.UI` | 385 | **A-** | ✅ Low | In-VR floating settings menu with seat height/distance sliders, pedal selectors, recenter, and additive map picker. | None. |
+| **`OverlayLayer.cs`** | `XrRacing.Gameplay.UI` | 28 | **A** | ✅ Zero | MenuOverlay layer constants and recursive layer application utility. | None. |
+| **`SceneGroupLoaderDeviceFix.cs`**| `XrRacing.Gameplay.SdkPatches` | 191 | **B+** | ⚠️ Low | Necessary reflection workaround for Meta SDK serialization bug on Quest. Includes SDK version warning guard. | Isolate to sample build configurations. |
+| **`ArcadeKart.cs`** *(Ported)* | `KartGame.KartSystems` | 500 | **B** | ⚠️ Med | Ported physics controller from Unity Karting Microgame. Complex raycast suspension and wheel friction model. | Maintain as reference port without unneeded edits. |
+| **`BaseInput.cs`** *(Ported)* | `KartGame.KartSystems` | 22 | **A** | ✅ Zero | Abstract input provider class returning `InputData` struct. Decouples physics from hardware. | None. |
+| **`KartAnimation.cs`** *(Ported)* | `KartGame.KartSystems` | 73 | **A-** | ✅ Zero | Controls steering wheel and tire rotation visuals from kart input. | None. |
+| **`KartPlayerAnimator.cs`** *(Ported)*| `KartGame.KartSystems` | 28 | **A** | ✅ Zero | Steers driver avatar IK and pedal visual animations. | None. |
+| **`ArcadeEngineAudio.cs`** *(Ported)*| `KartGame.KartSystems` | 59 | **A-** | ✅ Zero | Modulates engine pitch and volume based on kart speed and drift state. | None. |
+| **`MinMaxParameters.cs`** *(Ported)*| `KartGame.KartSystems` | 33 | **A** | ✅ Zero | Min/max parameter helper struct for physics ranges. | None. |
+| **`KartAgent.cs`** *(Ported)* | `KartGame.AI` | 259 | **B** | ⚠️ Med | Ported ML-Agents Agent driving `ArcadeKart` via `IInput`. Raycast sensors in `CollectObservations`. Clean training vs inferencing mode separation. | Verify sensor raycast allocation overhead in VR; maintain in `KartGame.AI`. |
+| **`DebugCheckpointRay.cs`** | `KartGame.AI` | 32 | **A** | ✅ Zero | Editor Gizmo visualization tool for checkpoint orientations. | None. Clean utility. |
+| **`QuestBuildDeploy.cs`** | *(global / Editor)* | 240 | **A-** | N/A | Reliable batch build script with `try ... finally` application ID restoration and exit code handling. | Keep global signature for CI compatibility. |
+| **`DriverSettingsMenuBuilder.cs`** | `XrRacing.Editor.UI` | 468 | **B+** | N/A | Procedural UI builder using Meta UISet prefabs. Includes explicit asset existence checks. | Keep isolated in Editor assembly. |
+| **`TrackScenesBuilder.cs`** | `XrRacing.Editor.Tracks` | 367 | **B+** | N/A | Procedural track scene builder; creates track scenes, adds `TrackInfo`, and syncs App build profile. | Keep isolated in Editor assembly. |
+| **`MenuOverlayRenderingSetup.cs`** | `XrRacing.Editor.UI` | 119 | **A-** | N/A | Injects URP RenderObjects draw-on-top feature for `MenuOverlay` layer with depth testing off. | Safe to re-run. |
+| **`DebugCheckpointRayEditor.cs`** | `KartGame.AI` | 46 | **A** | N/A | Custom Inspector for `DebugCheckpointRay`. Located in `Assets/Editor/`. | None. Clean editor tool. |
+| **`CreateSampleBuildProfiles.cs`**| *(global / Editor)* | 46 | **B+** | N/A | Concise editor utility for generating build profile assets. | Keep isolated in Editor assembly. |
 
 ---
 
@@ -66,7 +78,13 @@ In Standalone VR on Meta Quest, frame drops directly cause simulation sickness a
 - **Status:** Complete. Debug string formatting and logging calls enclosed within `if (WheelDebugLog.Enabled)`.
 
 ### Priority 2: Decouple Diagnostics in `XRWheelInput.cs` & Harden `WheelDebugLog.cs` (RESOLVED)
-- **Status:** Complete. `debugLog` defaults to `false`. `WheelDebugLog` is gated behind `#if XR_WHEEL_DEBUG` compiler directives with no-op stubs. `LogInteractorStatus()` uses cached `_handInteractors`.
+- **Status:** Complete. `debugLog` defaults to `false`. `WheelDebugLog` is gated behind `#if XR_WHEEL_DEBUG` compiler directives with no-op stubs. All diagnostics and reflection in `XRWheelInput` are compiled out of release builds (`#if UNITY_EDITOR || DEVELOPMENT_BUILD`).
 
 ### Priority 3: Add Assembly Definitions (`.asmdef`) (RESOLVED)
 - **Status:** Complete. Created `XrRacing.Gameplay.asmdef` and `XrRacing.Editor.asmdef` with explicit SDK references. Project compiles with zero errors.
+
+### Priority 4: Prevent Standalone Track Unload Memory Leaks (RESOLVED)
+- **Status:** Complete. `TrackLoader.UnloadOtherTracksAsync` invokes `Resources.UnloadUnusedAssets()` during track transitions while faded to black, keeping RAM usage flat across multi-track sessions.
+
+### Priority 5: Eliminate Unused Dead Code (RESOLVED)
+- **Status:** Complete. Removed `CarTeleportAnchor.cs` and archived its design doc, clearing all 3 CS0114 compiler warnings.

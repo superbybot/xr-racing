@@ -28,11 +28,13 @@ namespace XrRacing.Gameplay.Input
 
         private Quaternion _originRotation;
         private float _wheelAngle;
+        private Oculus.Interaction.HandGrab.HandGrabInteractor[] _handInteractors;
+        private Oculus.Interaction.HandGrab.HandGrabInteractable[] _wheelInteractables;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         private Transform _trackingSpace;
         private float _nextStatusTime;
         private string _lastStatus;
-        private Oculus.Interaction.HandGrab.HandGrabInteractor[] _handInteractors;
-        private Oculus.Interaction.HandGrab.HandGrabInteractable[] _wheelInteractables;
         private float _nextGrabDebugTime;
         private readonly System.Collections.Generic.Dictionary<Oculus.Interaction.HandGrab.HandGrabInteractor, string> _lastGrabState =
             new System.Collections.Generic.Dictionary<Oculus.Interaction.HandGrab.HandGrabInteractor, string>();
@@ -42,6 +44,7 @@ namespace XrRacing.Gameplay.Input
 
         [Tooltip("Temporary: hands closer than this (meters) to the wheel center get their grab attempt logged.")]
         [SerializeField] private float grabDebugRadius = 0.6f;
+#endif
 
         private void Awake()
         {
@@ -67,8 +70,10 @@ namespace XrRacing.Gameplay.Input
                 return;
             }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             LogInteractorStatus();
             LogHandGrabAttempts();
+#endif
 
             // Unwrap relative to last frame so turning the hand past 180 degrees doesn't flip to the other limit.
             float previousAngle = _wheelAngle;
@@ -85,6 +90,7 @@ namespace XrRacing.Gameplay.Input
             _wheelAngle = Mathf.Clamp(angle, -maxWheelAngle, maxWheelAngle);
             wheelTransform.localRotation = _originRotation * Quaternion.AngleAxis(_wheelAngle, wheelSpinAxis.normalized);
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (WheelDebugLog.Enabled && (!released || previousAngle != 0f || _wheelAngle != 0f))
             {
                 int selecting = wheelGrabbable != null ? wheelGrabbable.SelectingPointsCount : -1;
@@ -95,6 +101,7 @@ namespace XrRacing.Gameplay.Input
                     $"clamped={_wheelAngle != angle} released={released}");
                 LogHands(selecting, grabPoints);
             }
+#endif
         }
 
         private void Start()
@@ -104,6 +111,7 @@ namespace XrRacing.Gameplay.Input
                 FindObjectsByType<Oculus.Interaction.HandGrab.HandGrabInteractable>(FindObjectsInactive.Include),
                 IsWheelInteractable);
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (!WheelDebugLog.Enabled || wheelTransform == null)
             {
                 return;
@@ -132,7 +140,17 @@ namespace XrRacing.Gameplay.Input
                 $"pivot={pivot} worldAxis={WheelAxisWorld()} lossyScale={wheelTransform.lossyScale} " +
                 $"{meshInfo} {colliderInfo} trackingSpace={(_trackingSpace != null ? _trackingSpace.name : "none")} " +
                 $"grabbable={(wheelGrabbable != null ? wheelGrabbable.name : "none")} transformers=({DescribeTransformers()})");
+#endif
         }
+
+        private bool IsWheelInteractable(Oculus.Interaction.HandGrab.HandGrabInteractable interactable)
+        {
+            return interactable != null && wheelTransform != null &&
+                (interactable.transform.IsChildOf(wheelTransform) ||
+                 (interactable.Rigidbody != null && interactable.Rigidbody.transform == wheelTransform));
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 
         // Every 0.5s (and whenever it changes), logs the input mode and which grab interactors exist and are active,
         // to see whether hand grabbing is still available after switching between hands and controllers.
@@ -268,13 +286,6 @@ namespace XrRacing.Gameplay.Input
             return obj != null ? obj.name : "none";
         }
 
-        private bool IsWheelInteractable(Oculus.Interaction.HandGrab.HandGrabInteractable interactable)
-        {
-            return interactable != null && wheelTransform != null &&
-                (interactable.transform.IsChildOf(wheelTransform) ||
-                 (interactable.Rigidbody != null && interactable.Rigidbody.transform == wheelTransform));
-        }
-
         private static string DescribeInteractor(MonoBehaviour interactor, string state)
         {
             Transform parent = interactor.transform.parent;
@@ -392,6 +403,7 @@ namespace XrRacing.Gameplay.Input
             Quaternion baseRotation = (wheelTransform.parent != null ? wheelTransform.parent.rotation : Quaternion.identity) * _originRotation;
             return baseRotation * wheelSpinAxis.normalized;
         }
+#endif
 
         public override KartGame.KartSystems.InputData GenerateInput()
         {

@@ -169,6 +169,7 @@ namespace XrRacing.Gameplay.Tracks
 
         private async UniTask UnloadOtherTracksAsync(string keepPath, CancellationToken cancellationToken)
         {
+            bool anyUnloaded = false;
             foreach (TrackEntry track in tracks)
             {
                 if (track.scenePath == keepPath)
@@ -180,7 +181,13 @@ namespace XrRacing.Gameplay.Tracks
                 if (scene.isLoaded)
                 {
                     await SceneManager.UnloadSceneAsync(scene).ToUniTask(cancellationToken: cancellationToken);
+                    anyUnloaded = true;
                 }
+            }
+
+            if (anyUnloaded)
+            {
+                await Resources.UnloadUnusedAssets().ToUniTask(cancellationToken: cancellationToken);
             }
         }
 
