@@ -14,7 +14,8 @@ using XrRacing.Gameplay.Vehicle;
 namespace XrRacing.Editor.UI
 {
     /// <summary>
-    /// Builds the driver settings menu (seat height/distance, recenter, pedal mapping, reset) into the open scene
+    /// Builds the driver settings menu (track, reset kart, seat height/distance, recenter, pedal mapping,
+    /// reset settings) into the open scene
     /// from Meta Interaction SDK UISet prefabs. Safe to re-run: it replaces the previous menu.
     /// </summary>
     public static class DriverSettingsMenuBuilder
@@ -206,10 +207,16 @@ namespace XrRacing.Editor.UI
             // Track picker, only once "XR Racing/Build Track Scenes" has added a TrackLoader.
             TrackLoader trackLoader = UnityEngine.Object.FindAnyObjectByType<TrackLoader>(FindObjectsInactive.Include);
             Toggle[] trackToggles = new Toggle[0];
+            GameObject respawn = null;
             if (trackLoader != null && trackLoader.Tracks.Count > 0)
             {
                 trackToggles = TrackRow(backplate, trackLoader, out float trackRowHeight);
                 height += trackRowHeight;
+
+                respawn = Instantiate(SecondaryButtonPrefab, backplate);
+                respawn.name = "RespawnButton";
+                SetButtonLabel(respawn, "Reset kart to starting point", 20f);
+                height += AddRow(respawn, RowHeight);
             }
 
             (Slider heightSlider, TMP_Text heightValue) = SliderRow(backplate, "Height", "Seat height", out float rowHeight);
@@ -252,6 +259,7 @@ namespace XrRacing.Editor.UI
             SetSelector(serialized, "rightIndex", rightIndex);
             SetSelector(serialized, "rightThumb", rightThumb);
             serialized.FindProperty("trackLoader").objectReferenceValue = trackLoader;
+            serialized.FindProperty("respawnButton").objectReferenceValue = respawn != null ? respawn.GetComponent<Button>() : null;
             SerializedProperty toggles = serialized.FindProperty("trackToggles");
             toggles.arraySize = trackToggles.Length;
             for (int i = 0; i < trackToggles.Length; i++)

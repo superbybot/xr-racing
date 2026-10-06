@@ -12,7 +12,8 @@ namespace XrRacing.Gameplay.Tracks
     /// <summary>
     /// Swaps track scenes under the persistent driving scene: fade out, freeze the kart, unload the old track,
     /// load the new one additively (and make it the active scene so its lighting applies), place the kart at the
-    /// track's spawn, fade back in. Remembers the last track. Built by "XR Racing/Build Track Scenes".
+    /// track's spawn, fade back in. Remembers the last track. RequestRespawn puts the kart back at the spawn the
+    /// same way. Built by "XR Racing/Build Track Scenes".
     /// RequestTrack is the local "which track" entry point; a networked session can call LoadTrackAsync after
     /// Fusion has agreed on the track instead.
     /// </summary>
@@ -87,6 +88,88 @@ namespace XrRacing.Gameplay.Tracks
             }
 
             LoadTrackAsync(index, _lifetime.Token).Forget();
+        }
+
+        /// <summary>
+        /// Put the kart back at the current track's spawn, stopped (ignored while a switch is running). Fades around
+        /// it like a track switch. onMoved runs while the view is black, once the kart is in place.
+        /// </summary>
+        public void RequestRespawn(Action onMoved = null)
+        {
+            if (IsLoading || CurrentTrack == null)
+            {
+                return;
+            }
+
+            RespawnAsync(onMoved, _lifetime.Token).Forget();
+        }
+
+        public async UniTask RespawnAsync(Action onMoved, CancellationToken cancellationToken)
+        {
+            if (IsLoading || CurrentTrack == null)
+            {
+                return;
+            }
+
+            IsLoading = true;
+            Rigidbody body = kart.GetComponent<Rigidbody>();
+            bool wasKinematic = body.isKinematic;
+            bool wasKartEnabled = kart.enabled;
+
+            try
+            {
+                if (fader != null)
+                {
+                    await fader.FadeAsync(1f, cancellationToken);
+                }
+
+                // Same freeze as a track switch, so nothing (ArcadeKart, interpolation) drags the kart off the spawn.
+                if (!body.isKinematic)
+                {
+                    body.linearVelocity = Vector3.zero;
+                    body.angularVelocity = Vector3.zero;
+                }
+
+                kart.enabled = false;
+                body.isKinematic = true;
+                PlaceKart(CurrentTrack);
+
+                // A frame in the new spot while black, so the camera rig's smoothing catches up before fading in.
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+                onMoved?.Invoke();
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e, this);
+            }
+            finally
+            {
+                if (body != null)
+                {
+                    body.isKinematic = wasKinematic;
+                    if (!wasKinematic)
+                    {
+                        body.linearVelocity = Vector3.zero;
+                        body.angularVelocity = Vector3.zero;
+                    }
+                }
+
+                if (kart != null)
+                {
+                    kart.enabled = wasKartEnabled;
+                }
+
+                IsLoading = false;
+            }
+
+            if (fader != null)
+            {
+                await fader.FadeAsync(0f, cancellationToken);
+            }
         }
 
         public async UniTask LoadTrackAsync(int index, CancellationToken cancellationToken)

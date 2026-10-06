@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using Oculus.Interaction;
+using Oculus.Interaction.Surfaces;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -91,6 +93,8 @@ namespace XrRacing.Gameplay.UI
         [SerializeField] private TrackLoader trackLoader;
         [Tooltip("One tile per TrackLoader track, in the same order.")]
         [SerializeField] private Toggle[] trackToggles = new Toggle[0];
+        [Tooltip("Puts the kart back at the track's starting point (with a fade).")]
+        [SerializeField] private Button respawnButton;
         [Tooltip("Text color of the selected Accel/Brake and track option.")]
         [SerializeField] private Color selectedTextColor = Color.white;
         [Tooltip("How far in front of the head the panel sits (meters).")]
@@ -107,6 +111,11 @@ namespace XrRacing.Gameplay.UI
         [SerializeField, Min(0f)] private float followSettleDistance = 0.05f;
         [Tooltip("...and turned within this many degrees of facing the head.")]
         [SerializeField, Min(0f)] private float followSettleAngle = 5f;
+        [Tooltip("Depth (meters) of the panel's ray/poke hit area around its surface. Must stay above float precision " +
+            "at the track's distance from the world origin, or rays randomly miss the panel.")]
+        [SerializeField, Min(0.0001f)] private float pointerSurfaceDepth = 0.002f;
+        [Tooltip("Temporary: log the pointer rays to Logs/menu_ray.csv while the menu is open (dev builds only).")]
+        [SerializeField] private bool debugRayLog = true;
 
         private DriverSettings _settings;
         private bool _following;
@@ -114,6 +123,7 @@ namespace XrRacing.Gameplay.UI
         private TMP_Text[] _trackLabels = new TMP_Text[0];
         private Color _trackOffColor = Color.white;
         private IInteractableView[] _panelInteractables = new IInteractableView[0];
+        private readonly List<(GameObject go, int layer)> _handLayers = new List<(GameObject, int)>();
 
         /// <summary>True while the panel is showing; the kart ignores pedals meanwhile.</summary>
         public static bool IsOpen { get; private set; }
@@ -124,6 +134,11 @@ namespace XrRacing.Gameplay.UI
             distanceSlider.onValueChanged.AddListener(value => OnSeatSliderChanged());
             recenterButton.onClick.AddListener(OnRecenter);
             resetButton.onClick.AddListener(OnReset);
+            if (respawnButton != null)
+            {
+                respawnButton.onClick.AddListener(OnRespawn);
+            }
+
             leftIndex.Init(OnPedalsChanged);
             leftThumb.Init(OnPedalsChanged);
             rightIndex.Init(OnPedalsChanged);
@@ -131,7 +146,15 @@ namespace XrRacing.Gameplay.UI
             InitTrackToggles();
             _panelInteractables = panel.GetComponentsInChildren<IInteractableView>(true); // the panel's ray and poke targets
             DrawOnTop();
+            ThickenPointerSurface();
             panel.SetActive(false);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (debugRayLog)
+            {
+                gameObject.AddComponent<MenuRayDebugLog>().Init(panel, seat != null ? seat.transform : null, GetHead());
+            }
+#endif
         }
 
         private void OnEnable()
@@ -150,6 +173,7 @@ namespace XrRacing.Gameplay.UI
             }
 
             IsOpen = false;
+            SetHandsOnTop(false);
         }
 
         private void Update()
@@ -191,6 +215,7 @@ namespace XrRacing.Gameplay.UI
 
             PlaceInFrontOfHead();
             panel.SetActive(true);
+            SetHandsOnTop(true);
             IsOpen = true;
         }
 
@@ -198,6 +223,7 @@ namespace XrRacing.Gameplay.UI
         public void Close()
         {
             panel.SetActive(false);
+            SetHandsOnTop(false);
             IsOpen = false;
         }
 
@@ -250,6 +276,15 @@ namespace XrRacing.Gameplay.UI
             _settings.ResetToDefaults();
             ShowSettings();
             DriverSettings.Save(_settings);
+        }
+
+        // Back to the start line; the menu closes while the view is black so the player can drive straight away.
+        private void OnRespawn()
+        {
+            if (trackLoader != null)
+            {
+                trackLoader.RequestRespawn(Close);
+            }
         }
 
         private void InitTrackToggles()
@@ -357,10 +392,10 @@ namespace XrRacing.Gameplay.UI
 
         // Lazy follow: the panel holds still while it's roughly in view (so it's easy to poke), and glides back
         // in front of the head once the player looks or moves away. Smoothed in the rig's space so driving
-        // doesn't make it trail behind. Never moves while a ray or poke is on it.
+        // doesn't make it trail behind. Never moves while a ray or poke is pressing it.
         private void FollowHead()
         {
-            if (IsBeingPointedAt())
+            if (IsBeingPressed())
             {
                 _following = false;
                 _followVelocity = Vector3.zero;
@@ -423,12 +458,74 @@ namespace XrRacing.Gameplay.UI
             }
         }
 
-        // True while any ray or poke is hovering or pressing the panel.
-        private bool IsBeingPointedAt()
+        // The panel draws over everything, which also hides the hands reaching in to poke it. While it's open the hands
+        // go on the overlay layer too (drawn after the panel, being nearer); restored on close so the kart's body and
+        // wheel still cover them while driving.
+        private void SetHandsOnTop(bool onTop)
+        {
+            if (!onTop)
+            {
+                foreach ((GameObject go, int layer) in _handLayers)
+                {
+                    if (go != null)
+                    {
+                        go.layer = layer;
+                    }
+                }
+
+                _handLayers.Clear();
+                return;
+            }
+
+            int overlay = OverlayLayer.Index;
+            if (overlay < 0 || _handLayers.Count > 0)
+            {
+                return;
+            }
+
+            foreach (HandVisual hand in FindObjectsByType<HandVisual>(FindObjectsInactive.Include))
+            {
+                foreach (Renderer renderer in hand.GetComponentsInChildren<Renderer>(true))
+                {
+                    if (renderer.gameObject.layer == overlay)
+                    {
+                        continue; // already moved (nested hand visuals)
+                    }
+
+                    _handLayers.Add((renderer.gameObject, renderer.gameObject.layer));
+                    renderer.gameObject.layer = overlay;
+                }
+            }
+        }
+
+        // The ray/poke surface only counts hits within its clip box, which Meta's RectTransformBoundsClipperDriver makes
+        // 0.01 canvas units deep: 10 micrometers at the panel's 0.001 scale. Far from the world origin (the Playground
+        // spawn is ~180 m out) float precision is coarser than that, so rays randomly missed the panel every few frames
+        // (the "blinking" ray). Give the clip box a real depth instead; the driver would reset it, so it goes.
+        private void ThickenPointerSurface()
+        {
+            foreach (RectTransformBoundsClipperDriver driver in panel.GetComponentsInChildren<RectTransformBoundsClipperDriver>(true))
+            {
+                BoundsClipper clipper = driver.GetComponent<BoundsClipper>();
+                if (clipper == null)
+                {
+                    continue;
+                }
+
+                float scaleZ = Mathf.Abs(clipper.transform.lossyScale.z);
+                float depth = scaleZ > 0f ? pointerSurfaceDepth / scaleZ : clipper.Size.z;
+                clipper.Size = new Vector3(clipper.Size.x, clipper.Size.y, depth);
+                Destroy(driver);
+            }
+        }
+
+        // True while any ray or poke is pressing the panel (a button press or slider drag). Hovering alone doesn't
+        // count: a controller resting in the lap often points at the panel, which would stop it ever following.
+        private bool IsBeingPressed()
         {
             foreach (IInteractableView view in _panelInteractables)
             {
-                if (view.State == InteractableState.Hover || view.State == InteractableState.Select)
+                if (view.State == InteractableState.Select)
                 {
                     return true;
                 }

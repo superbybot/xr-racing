@@ -16,6 +16,7 @@ namespace XrRacing.Gameplay.Vehicle
     /// since a long glide of the whole view is uncomfortable in VR.
     /// </summary>
     [RequireComponent(typeof(VRCameraHeightSmoother))]
+    [DefaultExecutionOrder(-300)] // before VRCameraHeightSmoother, which places the rig using SeatOffset
     public class DriverSeatAdjuster : MonoBehaviour
     {
         [Tooltip("Where the driver's eyes should be, as a child of the kart. Its forward is the kart's forward.")]
@@ -74,7 +75,7 @@ namespace XrRacing.Gameplay.Vehicle
             JumpTo(_targetOffset, _targetRotation);
         }
 
-        // Runs before VRCameraHeightSmoother.LateUpdate, which places the rig using SeatOffset.
+        // Runs before VRCameraHeightSmoother.Update (see the execution order above).
         private void Update()
         {
             if (_fadeMove == null)

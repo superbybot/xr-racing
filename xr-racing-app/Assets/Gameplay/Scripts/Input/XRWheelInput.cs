@@ -28,6 +28,9 @@ namespace XrRacing.Gameplay.Input
 
         private Quaternion _originRotation;
         private float _wheelAngle;
+
+        /// <summary>The steering wheel this reads (the grabbable one).</summary>
+        public Transform WheelTransform => wheelTransform;
         private Oculus.Interaction.HandGrab.HandGrabInteractor[] _handInteractors;
         private Oculus.Interaction.HandGrab.HandGrabInteractable[] _wheelInteractables;
 

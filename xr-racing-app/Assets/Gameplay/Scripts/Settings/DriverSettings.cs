@@ -10,8 +10,7 @@ namespace XrRacing.Gameplay.Settings
     }
 
     /// <summary>
-    /// Player driving preferences. Recenter and the pedal mapping are saved to PlayerPrefs; Height and Distance
-    /// are per-session fine-tuning and always start at the default (5).
+    /// Player driving preferences, all saved to PlayerPrefs: Height, Distance, the pedal mapping and the last Recenter.
     /// </summary>
     [Serializable]
     public class DriverSettings
@@ -22,9 +21,9 @@ namespace XrRacing.Gameplay.Settings
 
         private const string Prefix = "xr-racing.driver.";
 
-        /// <summary>Seat height, 1 (lowest) to 10 (tallest). Not saved: every session starts at 5.</summary>
+        /// <summary>Seat height, 1 (lowest) to 10 (tallest).</summary>
         public int Height = DefaultStep;
-        /// <summary>Distance from the wheel, 1 (closest) to 10 (farthest). Not saved: every session starts at 5.</summary>
+        /// <summary>Distance from the wheel, 1 (closest) to 10 (farthest).</summary>
         public int Distance = DefaultStep;
 
         public PedalAction LeftIndex = PedalAction.Accelerate;
@@ -67,6 +66,8 @@ namespace XrRacing.Gameplay.Settings
         {
             _current = settings.Clone();
 
+            PlayerPrefs.SetInt(Prefix + "height", _current.Height);
+            PlayerPrefs.SetInt(Prefix + "distance", _current.Distance);
             PlayerPrefs.SetInt(Prefix + "leftIndex", (int)_current.LeftIndex);
             PlayerPrefs.SetInt(Prefix + "leftThumb", (int)_current.LeftThumb);
             PlayerPrefs.SetInt(Prefix + "rightIndex", (int)_current.RightIndex);
@@ -84,12 +85,10 @@ namespace XrRacing.Gameplay.Settings
         {
             var defaults = new DriverSettings();
 
-            // Height/Distance used to be saved; drop any old values so every session starts at 5.
-            PlayerPrefs.DeleteKey(Prefix + "height");
-            PlayerPrefs.DeleteKey(Prefix + "distance");
-
             return new DriverSettings
             {
+                Height = ClampStep(PlayerPrefs.GetInt(Prefix + "height", defaults.Height)),
+                Distance = ClampStep(PlayerPrefs.GetInt(Prefix + "distance", defaults.Distance)),
                 LeftIndex = LoadAction("leftIndex", defaults.LeftIndex),
                 LeftThumb = LoadAction("leftThumb", defaults.LeftThumb),
                 RightIndex = LoadAction("rightIndex", defaults.RightIndex),

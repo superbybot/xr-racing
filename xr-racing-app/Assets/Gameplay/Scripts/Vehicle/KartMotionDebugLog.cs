@@ -14,6 +14,9 @@ namespace XrRacing.Gameplay.Vehicle
     /// Writes Logs/kart_motion.csv in the Editor (Application.persistentDataPath/kart_motion.csv on device):
     ///   SUMMARY  once a second: vertical range, max vertical speed/acceleration, up/down flips, grounded %, speed
     ///   BOUNCE / OSCILLATION / WHEEL_AIR / GROUND_CHANGE / CAM_JITTER  when something stands out
+    ///   WHEEL_HANDS  once a second: where the steering wheel, head and hands sit, to tell whether the wheel drifts
+    ///                away from the hands over a session or the player's body does; every 0.1 s for a few
+    ///                seconds after a LANDING (all wheels off the ground, then back down)
     ///   P (physics step) and F (rendered frame) raw samples, if Log Raw Samples is on.
     /// The kart body (physics) vs the camera (rendered) columns show whether the kart itself bounces or only the
     /// view does. Compiled out of release builds; also off unless this component is enabled.
@@ -36,11 +39,20 @@ namespace XrRacing.Gameplay.Vehicle
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private const float SummaryInterval = 1f;
         private const float FlipWindow = 0.5f;
+        private const float MinAirTime = 0.15f;
+        private const float LandingLogTime = 3f;
+        private const float LandingLogInterval = 0.1f;
 
         private ArcadeKart _kart;
         private Rigidbody _body;
         private WheelCollider[] _wheels;
         private Transform _camera;
+        private OVRCameraRig _rig;
+        private Transform _wheel;
+        private Oculus.Interaction.Grabbable _wheelGrabbable;
+        private float _airTime;
+        private float _landingLogUntil;
+        private float _nextLandingLog;
         private StreamWriter _writer;
         private readonly StringBuilder _line = new StringBuilder(256);
 
@@ -159,6 +171,22 @@ namespace XrRacing.Gameplay.Vehicle
                 Event("WHEEL_AIR", $"grounded {_lastGrounded}->{grounded} vy={F(vy)} speed={F(speed)} susp=[{compressions}]");
             }
 
+            if (grounded == 0)
+            {
+                _airTime += dt;
+            }
+            else
+            {
+                if (_airTime >= MinAirTime)
+                {
+                    Event("LANDING", $"airTime={F(_airTime)} vy={F(_lastVy)} wheels={grounded} speed={F(speed)}");
+                    _landingLogUntil = Time.time + LandingLogTime;
+                    _nextLandingLog = Time.time;
+                }
+
+                _airTime = 0f;
+            }
+
             if (groundName != null && _lastGroundName != null && groundName != _lastGroundName)
             {
                 Event("GROUND_CHANGE", $"{_lastGroundName} -> {groundName} vy={F(vy)} ay={F(ay)} (a seam between track pieces?)");
@@ -233,12 +261,19 @@ namespace XrRacing.Gameplay.Vehicle
             _lastCameraY = cameraY;
             _hasLastFrame = true;
 
+            if (Time.time < _landingLogUntil && Time.time >= _nextLandingLog)
+            {
+                _nextLandingLog = Time.time + LandingLogInterval;
+                LogWheelAndHands();
+            }
+
             if (Time.time - _summaryStart >= SummaryInterval && _steps > 0)
             {
                 Write("SUMMARY",
                     $"track={SceneManager.GetActiveScene().name} yRange={F(_maxY - _minY)} maxVy={F(_maxAbsVy)} maxAy={F(_maxAbsAy)} " +
                     $"upDownFlips={_flipsThisSecond} grounded={F(_groundSum / _steps)} avgSpeed={F(_speedSum / _steps)} " +
                     $"events={_events} camJitterFrames={_maxCameraJitterFrames} maxCamExtra={F(_maxCameraExtra)}");
+                LogWheelAndHands();
                 _writer.Flush();
 
                 _summaryStart = Time.time;
@@ -247,6 +282,63 @@ namespace XrRacing.Gameplay.Vehicle
                 _maxAbsVy = _maxAbsAy = _groundSum = _speedSum = _maxCameraExtra = 0f;
                 _steps = _flipsThisSecond = _events = _maxCameraJitterFrames = 0;
             }
+        }
+
+        // Kart-space positions show what moved relative to the kart (the wheel, or the player's head); hub-relative
+        // positions in the wheel mount's space (its plane is x/y, as the player sees it) show whether the hands are
+        // centered on the wheel. Grab points are where the (snapped) hands hold the wheel.
+        private void LogWheelAndHands()
+        {
+            if (_wheel == null)
+            {
+                XrRacing.Gameplay.Input.XRWheelInput input = GetComponentInChildren<XrRacing.Gameplay.Input.XRWheelInput>(true);
+                _wheel = input != null ? input.WheelTransform : null;
+                _wheelGrabbable = _wheel != null ? _wheel.GetComponent<Oculus.Interaction.Grabbable>() : null;
+                _rig = GetComponentInChildren<OVRCameraRig>();
+            }
+
+            if (_wheel == null || _wheel.parent == null)
+            {
+                return;
+            }
+
+            Transform mount = _wheel.parent;
+            Vector3 FromHub(Vector3 world) => mount.InverseTransformPoint(world) - _wheel.localPosition;
+
+            _line.Clear();
+            _line.Append("hubInKart=").Append(V(transform.InverseTransformPoint(_wheel.position)))
+                .Append(" mountTiltLag=").Append(F(Vector3.Angle(mount.up, transform.up)))
+                .Append(" kartTilt=").Append(F(Vector3.Angle(transform.up, Vector3.up)));
+
+            if (_camera != null)
+            {
+                _line.Append(" headInKart=").Append(V(transform.InverseTransformPoint(_camera.position)));
+            }
+
+            if (_rig != null)
+            {
+                Vector3 left = FromHub(_rig.leftHandAnchor.position);
+                Vector3 right = FromHub(_rig.rightHandAnchor.position);
+                _line.Append(" leftFromHub=").Append(V(left))
+                    .Append(" rightFromHub=").Append(V(right))
+                    .Append(" midFromHub=").Append(V((left + right) * 0.5f));
+            }
+
+            if (_wheelGrabbable != null)
+            {
+                _line.Append(" held=").Append(_wheelGrabbable.SelectingPointsCount);
+                for (int i = 0; i < _wheelGrabbable.GrabPoints.Count; i++)
+                {
+                    _line.Append(" grab").Append(i).Append("FromHub=").Append(V(FromHub(_wheelGrabbable.GrabPoints[i].position)));
+                }
+            }
+
+            Write("WHEEL_HANDS", _line.ToString());
+        }
+
+        private static string V(Vector3 v)
+        {
+            return $"({F(v.x)} {F(v.y)} {F(v.z)})";
         }
 
         private void Event(string kind, string detail)

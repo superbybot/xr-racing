@@ -11,6 +11,7 @@ namespace XrRacing.Gameplay.Vehicle
     ///   - World height is low-pass filtered (suspension bounce).
     /// The rig's own seat pose (SeatOffset / SeatRotation, set by DriverSeatAdjuster) is applied underneath.
     /// </summary>
+    [DefaultExecutionOrder(-200)] // before OVRCameraRig, the interactors and the menu, so they all see this frame's rig pose
     public class VRCameraHeightSmoother : MonoBehaviour
     {
         [Tooltip("The kart; defaults to the parent.")]
@@ -28,12 +29,27 @@ namespace XrRacing.Gameplay.Vehicle
         [Tooltip("Max degrees the view may lag that tilt, so big sudden tilts (crashes) still come through at once.")]
         [SerializeField, Range(0f, 45f)] private float maxTiltLag = 5f;
 
+        [Header("Steering wheel")]
+        [Tooltip("Moves with the view (not the kart's tilt), so it stays in the player's hands on ramps, jumps and " +
+            "bumps. Defaults to the wheel of the kart's XRWheelInput.")]
+        [SerializeField] private Transform steeringWheel;
+        [Tooltip("How much of the kart's tilt the wheel shows, turning around its own hub so the rim barely moves " +
+            "under the hands. Gives a feel of the kart pitching on ramps. 0 = none.")]
+        [SerializeField, Range(0f, 1f)] private float wheelTiltFeel = 0.3f;
+        [Tooltip("Max degrees of that tilt.")]
+        [SerializeField, Range(0f, 30f)] private float wheelMaxTilt = 10f;
+        [Tooltip("Seconds the wheel's tilt takes to follow, so bumps don't jolt it.")]
+        [SerializeField, Min(0f)] private float wheelTiltSmoothTime = 0.2f;
+
         private Vector3 _baseLocalPosition;
         private float _smoothedY;
         private float _velocity;
         private Vector3 _smoothedUp = Vector3.up;
         private Vector3 _heading = Vector3.forward;
         private Transform _head;
+        private Transform _wheelMount;
+        private Vector3 _wheelMountLocalPosition;
+        private Quaternion _wheelTilt = Quaternion.identity;
 
         /// <summary>0..1, see the Horizon Lock tooltip. Settable at runtime (e.g. from a comfort setting).</summary>
         public float HorizonLock
@@ -71,7 +87,33 @@ namespace XrRacing.Gameplay.Vehicle
             }
         }
 
-        private void LateUpdate()
+        // After every Awake, so XRWheelInput has cached the wheel's rest rotation.
+        private void Start()
+        {
+            if (steeringWheel == null && followTarget != null)
+            {
+                XrRacing.Gameplay.Input.XRWheelInput wheelInput = followTarget.GetComponentInChildren<XrRacing.Gameplay.Input.XRWheelInput>(true);
+                steeringWheel = wheelInput != null ? wheelInput.WheelTransform : null;
+            }
+
+            if (steeringWheel == null || steeringWheel.parent == null)
+            {
+                return;
+            }
+
+            // A mount between the wheel and its parent that this owns, so the wheel keeps its own local rotation
+            // (XRWheelInput spins it) while the mount is steadied. The mount's axes match the old parent's.
+            _wheelMount = new GameObject("SteeringWheelMount").transform;
+            _wheelMount.SetParent(steeringWheel.parent, false);
+            _wheelMount.localPosition = steeringWheel.localPosition;
+            _wheelMountLocalPosition = steeringWheel.localPosition;
+            steeringWheel.SetParent(_wheelMount, false);
+            steeringWheel.localPosition = Vector3.zero;
+        }
+
+        // Update, not LateUpdate: the kart has already moved (physics and interpolation run before Update), and
+        // moving the rig after the controllers have cast their rays makes the menu ray flicker.
+        private void Update()
         {
             if (followTarget == null)
             {
@@ -86,6 +128,8 @@ namespace XrRacing.Gameplay.Vehicle
 
             transform.localPosition = _baseLocalPosition + SeatOffset;
             transform.localRotation = SeatRotation;
+            Vector3 kartFixedPosition = transform.position;
+            Quaternion kartFixedRotation = transform.rotation;
             transform.position += Vector3.up * offset;
 
             // Tilt: the view's target orientation is the kart's, leveled toward the world by Horizon Lock (same heading).
@@ -125,10 +169,51 @@ namespace XrRacing.Gameplay.Vehicle
                     pivot + correction * (transform.position - pivot),
                     correction * transform.rotation);
             }
+
+            SteadyWheel(kartFixedPosition, kartFixedRotation);
+        }
+
+        // The player's hands live in the rig's space, so the wheel gets exactly the rig's move away from the kart
+        // (height smoothing, Horizon Lock): it stays where it sits relative to the player when the kart is level,
+        // however the kart pitches or rolls. Otherwise a 40° ramp swings the wheel tens of cm out of the hands. A
+        // small, smoothed share of the tilt is put back around the wheel's own hub, for the feel of the slope.
+        private void SteadyWheel(Vector3 kartFixedPosition, Quaternion kartFixedRotation)
+        {
+            if (_wheelMount == null)
+            {
+                return;
+            }
+
+            // Rig's pose now vs where it would be if it were simply fixed to the kart.
+            Quaternion rigDelta = transform.rotation * Quaternion.Inverse(kartFixedRotation);
+
+            Transform mountParent = _wheelMount.parent;
+            Vector3 position = transform.position + rigDelta * (mountParent.TransformPoint(_wheelMountLocalPosition) - kartFixedPosition);
+            Quaternion rotation = rigDelta * mountParent.rotation;
+
+            Quaternion tiltTarget = Quaternion.Slerp(Quaternion.identity, Quaternion.Inverse(rigDelta), wheelTiltFeel);
+            tiltTarget.ToAngleAxis(out float angle, out Vector3 axis);
+            if (angle > 180f)
+            {
+                angle -= 360f;
+            }
+
+            tiltTarget = float.IsFinite(axis.x) ? Quaternion.AngleAxis(Mathf.Clamp(angle, -wheelMaxTilt, wheelMaxTilt), axis) : Quaternion.identity;
+            _wheelTilt = wheelTiltSmoothTime > 0f
+                ? Quaternion.Slerp(_wheelTilt, tiltTarget, 1f - Mathf.Exp(-Time.deltaTime / wheelTiltSmoothTime))
+                : tiltTarget;
+
+            _wheelMount.SetPositionAndRotation(position, _wheelTilt * rotation);
         }
 
         private void OnDisable()
         {
+            if (_wheelMount != null)
+            {
+                _wheelMount.localPosition = _wheelMountLocalPosition;
+                _wheelMount.localRotation = Quaternion.identity;
+            }
+
             transform.localPosition = _baseLocalPosition + SeatOffset;
             transform.localRotation = SeatRotation;
         }
