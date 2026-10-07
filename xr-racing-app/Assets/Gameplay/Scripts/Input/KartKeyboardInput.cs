@@ -7,7 +7,7 @@ namespace XrRacing.Gameplay.Input
     {
         public override KartGame.KartSystems.InputData GenerateInput()
         {
-            if (Keyboard.current == null)
+            if (Keyboard.current == null || XrRacing.Gameplay.Race.RaceManager.IsControlsLocked)
             {
                 return default;
             }

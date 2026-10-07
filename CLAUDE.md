@@ -130,6 +130,10 @@ aider --yes-always --no-auto-commits --no-git --no-show-model-warnings `
   from git, don't repair the repo — fall back to `--no-git` or direct edits.
 - Don't call the `start aider` shell function from the agent's shell (not
   reliably in scope); use the explicit form above. Only *read* it for the model.
+- **Free GPU memory after every aider execution.** Once an aider run finishes
+  (success, failure, or timeout), run `lms unload --all` and confirm with
+  `lms ps` that no models are loaded — never leave the model resident in GPU
+  memory. Reload it with `lms load <model>` before the next aider run.
 
 ### Reporting & logging
 
@@ -150,7 +154,25 @@ aider --yes-always --no-auto-commits --no-git --no-show-model-warnings `
 
 ### Verifying Unity C# changes
 
-After a *batch* of aider edits (not per file — it's slow), catch real compiler
+**First choice: Roslyn validation through MCP for Unity.** After every aider
+edit to a `.cs` file, call the UnityMCP `validate_script` tool on each changed
+script. With Roslyn installed it runs full semantic analysis (undefined
+namespaces, types, members) at write time, with no Unity compile and no
+conflict with an open Editor. Treat any error it reports like `error CS`: fix it
+before moving on. Then trigger a refresh/compile and check `read_console` for
+errors as the final check for the batch.
+- Roslyn setup (one-time, done by the user in the Editor): **Window → MCP for
+  Unity → Scripts / Validation → Runtime Code Execution (Roslyn) → Install
+  Roslyn DLLs**. It puts DLLs in `Assets/Plugins/Roslyn/` and adds the
+  `USE_ROSLYN` scripting define; the status panel then shows **Roslyn: enabled**.
+  Commit those DLLs with their `.meta` files (guardrail 1).
+- If `Assets/Plugins/Roslyn/` or `USE_ROSLYN` is missing, `validate_script` only
+  does a structural check. Say so, and don't treat it as a compile check.
+- If UnityMCP isn't connected (e.g. `ECONNREFUSED`), tell the user and fall back
+  to the headless pass below. That pass can't run while the Editor has the
+  project open.
+
+**Fallback: headless Editor pass.** After a *batch* of aider edits (not per file — it's slow), catch real compiler
 errors with a headless Editor pass and grep for `error CS`; no matches means a
 clean compile, and this is authoritative over reading the diff by hand:
 ```

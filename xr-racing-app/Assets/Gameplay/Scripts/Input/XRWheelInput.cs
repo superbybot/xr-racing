@@ -420,8 +420,11 @@ namespace XrRacing.Gameplay.Input
             float accelerate = 0f;
             float brake = 0f;
 
-            // No pedals while the settings menu is open (so poking the panel doesn't drive) or a track is loading.
-            if (!XrRacing.Gameplay.UI.DriverSettingsMenu.IsOpen && (trackLoader == null || !trackLoader.IsLoading))
+            // No pedals while the settings menu is open (so poking the panel doesn't drive), a track is loading,
+            // or race controls are locked (countdown/race finish).
+            if (!XrRacing.Gameplay.UI.DriverSettingsMenu.IsOpen &&
+                (trackLoader == null || !trackLoader.IsLoading) &&
+                !XrRacing.Gameplay.Race.RaceManager.IsControlsLocked)
             {
                 var settings = XrRacing.Gameplay.Settings.DriverSettings.Current;
                 AddSidePedals(Oculus.Interaction.Input.Handedness.Left, OVRInput.Controller.LTouch,

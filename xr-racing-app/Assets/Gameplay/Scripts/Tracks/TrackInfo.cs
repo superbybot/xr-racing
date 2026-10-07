@@ -15,10 +15,13 @@ namespace XrRacing.Gameplay.Tracks
         [SerializeField] private Transform playerSpawn;
         [Tooltip("The track's checkpoints in driving order (the ML-Agents training checkpoints), for laps and AI karts.")]
         [SerializeField] private Collider[] checkpoints = new Collider[0];
+        [Tooltip("Number of laps to complete for this track. Defaults to 2.")]
+        [SerializeField, Min(1)] private int lapsToComplete = 2;
 
         public string DisplayName => displayName;
         public Transform PlayerSpawn => playerSpawn;
         public Collider[] Checkpoints => checkpoints;
+        public int LapsToComplete => lapsToComplete;
 
 #if UNITY_EDITOR
         private void OnDrawGizmos()

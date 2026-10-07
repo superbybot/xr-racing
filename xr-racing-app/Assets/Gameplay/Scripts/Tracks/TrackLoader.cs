@@ -55,6 +55,8 @@ namespace XrRacing.Gameplay.Tracks
 
         /// <summary>Raised with the new index once a track is loaded and the kart is on it.</summary>
         public event Action<int> TrackChanged;
+        /// <summary>Raised once a respawn to the track's starting point finishes.</summary>
+        public event Action Respawned;
 
         private void Awake()
         {
@@ -170,6 +172,8 @@ namespace XrRacing.Gameplay.Tracks
             {
                 await fader.FadeAsync(0f, cancellationToken);
             }
+
+            Respawned?.Invoke();
         }
 
         public async UniTask LoadTrackAsync(int index, CancellationToken cancellationToken)
