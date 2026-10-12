@@ -193,3 +193,12 @@ Only if that fails, or aider's output is clearly wrong after 1–2 real attempts
 say so explicitly and either retry with a more precise instruction or implement
 directly. Never silently keep retrying, never silently switch to a paid model,
 and never ask the user to load the model manually before trying `lms load`.
+
+## Autonomous testing
+
+Before testing gameplay yourself (Play mode, screenshots, driving), read
+`docs/autonomous-testing.md` and follow its rules. In short: drive through the
+real input path (simulated controllers on the wheel via Meta XR Operator, not
+keyboard or physics hacks), never add test-only components to gameplay scenes,
+save captures to `test-captures/` (never under `Assets/`), and clean up inputs,
+Play mode and Simulator settings when done. Helper scripts are in `tools/autotest/`.

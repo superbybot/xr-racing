@@ -120,3 +120,6 @@ xr-racing-app/Assets/_Recovery.meta
 # AI assistant session and local configs
 .aider*
 .claude/settings.local.json
+
+# Autonomous test output (screenshots, logs)
+/test-captures/
