@@ -62,14 +62,31 @@ in the first end-to-end run (2026-10-12, Track_Playground). Scripts live in
 - If Play mode quits ~4 s after start with "Playback is complete! Quitting" in the
   Simulator log, remove the `session_capture` block from
   `%APPDATA%\MetaXR\MetaXrSimulator\persistent_data.json`. Never leave one behind.
+- With controllers, the rig draws no hands or controllers, so nothing visible holds
+  the wheel. A white-outlined hand on the rim is an Interaction SDK authoring ghost
+  (`OpenXRGhost-Hand*(Clone)`) that got saved into a prefab. Delete it from the
+  prefab; it was removed from `HandGrabInteractable_Wheel.prefab` on 2026-10-12.
+- Seen once (2026-10-12): wheel input and `kartInput` both read throttle 0.58, but
+  the kart crept at ~0.4 m/s for a whole run. It drove normally on the next Play.
+  Cause unknown; if it happens, restart Play mode and note it in the report.
 
 ## Recipe: drive the Playground with the hands
 
+From the git root, in Git Bash. Paths must be absolute: `eval_file` resolves
+relative paths against `xr-racing-app/`, and the proxy fails to launch from a relative path.
+
 ```bash
-U="$LOCALAPPDATA/Unity/bin/unity.exe"; T=tools/autotest
-P=$(ls -d xr-racing-app/Library/PackageCache/com.meta.xr.sdk.core@*/Editor/MetaXROperator/Tools~/Windows/meta-xr-operator-mcp-proxy.exe | tail -1)
-"$U" command editor_focus; "$U" command editor_play; sleep 8; "$U" command editor_focus
+R=$(pwd -W); U="$LOCALAPPDATA/Unity/bin/unity.exe"; T="$R/tools/autotest"
+P="$R/$(ls -d xr-racing-app/Library/PackageCache/com.meta.xr.sdk.core@*/Editor/MetaXROperator/Tools~/Windows/meta-xr-operator-mcp-proxy.exe | tail -1)"
+"$U" command editor_focus; "$U" command editor_play; sleep 10
+for i in 1 2 3 4 5; do "$U" command editor_focus && break; sleep 3; done   # Editor is busy right after entering Play
 export RIM=$("$U" command eval_file --file "$T/wheel_path.cs" --result-only | python -I -c "import json,sys; print(json.load(sys.stdin)['result'])")
-OUT=$(date +%F)_playground MAXT=180 PYTHONIOENCODING=utf-8 python -I -X utf8 "$T/op.py" "$P" "$T/op_drive.py"
+# Quick check: timed free drive, screenshot every SHOT seconds (no waypoints)
+OUT=$(date +%F)_drive DRIVE=30 SHOT=5 PYTHONIOENCODING=utf-8 python -I -X utf8 "$T/op.py" "$P" "$T/op_drive_timed.py"
+# Or the waypoint tour: OUT=... MAXT=180 ... "$T/op_drive.py"
 python -I -X utf8 "$T/op.py" "$P" "$T/op_release.py"; "$U" command editor_stop
 ```
+
+`op_drive_timed.py` holds a steady right-hand circle after 6 s. Its lap is about
+5 s, so positions sampled every 5 s can look stuck while the kart is moving. Check
+`speed` in `why_still.cs` before calling it a stall.
