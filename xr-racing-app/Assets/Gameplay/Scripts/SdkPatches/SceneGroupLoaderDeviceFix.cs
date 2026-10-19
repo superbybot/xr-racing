@@ -211,7 +211,6 @@ namespace XrRacing.Gameplay.SdkPatches
                 }
             }
 
-            Debug.Log($"[SceneGroupLoaderDeviceFix] loaders={loaders.Length} toggles={toggleCount} buildScenes={buildSceneNames.Count} tileViewTypeFound={TileViewType != null} fixedThisPass={fixedCount} imageFixedThisPass={imageFixedCount}");
         }
     }
 }
