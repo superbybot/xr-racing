@@ -107,6 +107,8 @@ public static class QuestBuildDeploy
         finally
         {
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, originalAppId);
+            // Save the restored ID; the build saves project settings, so the suffixed ID would otherwise stay on disk.
+            AssetDatabase.SaveAssets();
         }
     }
 
