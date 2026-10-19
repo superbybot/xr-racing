@@ -18,8 +18,20 @@ public static class CreateSampleBuildProfiles
         CreateOrUpdateProfile("CoreSdkSamples", androidPlatform.platformGuid,
             FindScenesUnderFoldersStartingWith("Meta XR Core SDK"));
 
+        // The driving scene must stay first (it's what the player boots into); TrackLoader loads the track scenes
+        // additively from the driver menu, so they have to be in the build too.
         CreateOrUpdateProfile("App", androidPlatform.platformGuid,
-            new[] { "Assets/Gameplay/Scenes/DrivingPrototype_VR.unity" });
+            new[] { "Assets/Gameplay/Scenes/DrivingPrototype_VR.unity" }
+                .Concat(FindScenesIn("Assets/Gameplay/Scenes/Tracks"))
+                .ToArray());
+    }
+
+    private static string[] FindScenesIn(string folder)
+    {
+        return Directory.GetFiles(folder, "*.unity", SearchOption.AllDirectories)
+            .Select(p => p.Replace('\\', '/'))
+            .OrderBy(p => p)
+            .ToArray();
     }
 
     private static string[] FindScenesUnderFoldersStartingWith(string folderNamePrefix)

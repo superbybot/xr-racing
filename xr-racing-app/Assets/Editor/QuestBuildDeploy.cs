@@ -134,6 +134,23 @@ public static class QuestBuildDeploy
             return null;
         }
 
+        // On the CI runner Unity activates the profile at startup, before the freshly pulled .asset is re-imported,
+        // so the build can use a stale scene list (it shipped only the driving scene, without the track scenes).
+        string profilePath = AssetDatabase.GetAssetPath(profile);
+        AssetDatabase.ImportAsset(profilePath, ImportAssetOptions.ForceUpdate);
+        profile = AssetDatabase.LoadAssetAtPath<BuildProfile>(profilePath);
+
+        string[] scenes = (profile.overrideGlobalScenes ? profile.scenes : EditorBuildSettings.scenes)
+            .Where(s => s.enabled)
+            .Select(s => s.path)
+            .ToArray();
+        Debug.Log($"Build profile '{profileName}' scenes ({scenes.Length}): {string.Join(", ", scenes)}");
+        if (scenes.Length == 0)
+        {
+            Debug.LogError($"Build profile '{profileName}' has no enabled scenes.");
+            return null;
+        }
+
         Directory.CreateDirectory(BuildDir);
         string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
         string apkPath = Path.Combine(BuildDir, $"{apkPrefix}_{timestamp}.apk");
