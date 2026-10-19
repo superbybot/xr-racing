@@ -32,6 +32,11 @@ namespace XrRacing.Gameplay.Vehicle
         [SerializeField] private float fadeAboveMeters = 0.35f;
         [Tooltip("Seconds to fade out, and again to fade back in, around a big move.")]
         [SerializeField] private float fadeTime = 0.1f;
+        [Tooltip("Recenter automatically once the headset starts tracking, every session. A saved recenter only fits " +
+            "the posture and floor height it was made with, so reusing it can leave the view far above the wheel.")]
+        [SerializeField] private bool recenterOnStart = true;
+        [Tooltip("Seconds to wait after tracking starts before the automatic recenter, so the head pose has settled.")]
+        [SerializeField, Min(0f)] private float recenterOnStartDelay = 1f;
 
         private const float FadeAboveDegrees = 1f;
 
@@ -50,10 +55,10 @@ namespace XrRacing.Gameplay.Vehicle
             _smoother = GetComponent<VRCameraHeightSmoother>();
             _baseLocalRotation = transform.localRotation;
 
-            if (head == null)
+            if (head == null || !head)
             {
                 OVRCameraRig rig = GetComponentInChildren<OVRCameraRig>();
-                head = rig != null ? rig.centerEyeAnchor : null;
+                head = rig != null && rig.centerEyeAnchor != null ? rig.centerEyeAnchor : GetComponentInChildren<Camera>()?.transform;
             }
         }
 
@@ -71,8 +76,73 @@ namespace XrRacing.Gameplay.Vehicle
 
         private void Start()
         {
-            ComputeTarget(DriverSettings.Current, out _targetOffset, out _targetRotation);
-            JumpTo(_targetOffset, _targetRotation);
+            if (!OVRManager.isHmdPresent || head == null || head.localPosition.sqrMagnitude < 0.0001f)
+            {
+                RecenterSimulatorFallback();
+            }
+            else
+            {
+                ComputeTarget(DriverSettings.Current, out _targetOffset, out _targetRotation);
+                JumpTo(_targetOffset, _targetRotation);
+            }
+
+            if (recenterOnStart)
+            {
+                StartCoroutine(RecenterWhenTracked());
+            }
+        }
+
+        // The head sits at the rig's origin until the headset reports a pose, so wait for it to move off zero.
+        // Keeps the saved Height/Distance: they fine-tune from the eye point, which is what Recenter restores.
+        private IEnumerator RecenterWhenTracked()
+        {
+            // If in editor / simulator and no HMD is actively feeding non-zero tracking, fall back after a short wait
+            float timeout = 2.0f;
+            while ((head == null || !OVRManager.isHmdPresent || head.localPosition.sqrMagnitude < 0.0001f) && timeout > 0f)
+            {
+                timeout -= Time.deltaTime;
+                yield return null;
+            }
+
+            if (head == null || !OVRManager.isHmdPresent || head.localPosition.sqrMagnitude < 0.0001f)
+            {
+                // No live HMD tracking received (desktop / simulator test run) -> snap to DriverEyePoint
+                RecenterSimulatorFallback();
+                SetFade(0f);
+                yield break;
+            }
+
+            yield return new WaitForSeconds(recenterOnStartDelay);
+
+            // The menu edits its own copy of the settings; don't move the seat out from under it.
+            if (XrRacing.Gameplay.UI.DriverSettingsMenu.IsOpen)
+            {
+                yield break;
+            }
+
+            DriverSettings settings = DriverSettings.Current.Clone();
+            if (Recenter(settings))
+            {
+                Apply(settings, null, false);
+                DriverSettings.Save(settings);
+            }
+        }
+
+        private void RecenterSimulatorFallback()
+        {
+            if (eyePoint == null || transform.parent == null)
+            {
+                return;
+            }
+
+            DriverSettings settings = DriverSettings.Current.Clone();
+            if (Recenter(settings))
+            {
+                ComputeTarget(settings, out _targetOffset, out _targetRotation);
+                JumpTo(_targetOffset, _targetRotation);
+                SetFade(0f);
+                DriverSettings.Save(settings);
+            }
         }
 
         // Runs before VRCameraHeightSmoother.Update (see the execution order above).

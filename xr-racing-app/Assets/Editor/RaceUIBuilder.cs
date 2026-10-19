@@ -106,7 +106,7 @@ namespace XrRacing.Editor.Race
                 RaceCountdownUI countdownUI = BuildCountdownUI(kart.transform, eyePoint);
 
                 // 4. Build Floating Lap UI
-                FloatingLapUI floatingLapUI = BuildFloatingLapUI(kart.transform, eyePoint);
+                FloatingLapUI floatingLapUI = BuildFloatingLapUI(kart.transform, eyePoint, seat);
 
                 // 5. Build Race Ending Menu
                 RaceEndingMenu endingMenu = BuildEndingMenu(managerObject.transform, seat, eyePoint, trackLoader);
@@ -215,7 +215,7 @@ namespace XrRacing.Editor.Race
             return countdown;
         }
 
-        private static FloatingLapUI BuildFloatingLapUI(Transform kart, Transform eyePoint)
+        private static FloatingLapUI BuildFloatingLapUI(Transform kart, Transform eyePoint, DriverSeatAdjuster seat)
         {
             var go = new GameObject("FloatingLapHUD", typeof(FloatingLapUI));
             go.transform.SetParent(kart, false);
@@ -224,9 +224,9 @@ namespace XrRacing.Editor.Race
             GameObject panel = Instantiate(BackplatePrefab, go.transform);
             panel.name = "LapCard";
 
-            // Local position on the driver's left side view
-            Vector3 localOffset = new Vector3(-0.45f, 0.05f, 0.65f);
-            Quaternion localRot = Quaternion.Euler(0f, 22f, 0f);
+            // Straight ahead, above eye level; FloatingLapUI turns it to face the head at runtime.
+            Vector3 localOffset = new Vector3(0f, 0.4f, 0.8f);
+            Quaternion localRot = Quaternion.identity;
 
             if (eyePoint != null)
             {
@@ -260,6 +260,7 @@ namespace XrRacing.Editor.Race
             serialized.FindProperty("panel").objectReferenceValue = panel;
             serialized.FindProperty("lapLabel").objectReferenceValue = label;
             serialized.FindProperty("lapValue").objectReferenceValue = value;
+            serialized.FindProperty("seat").objectReferenceValue = seat;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
             OverlayLayer.Apply(panel);
@@ -295,28 +296,22 @@ namespace XrRacing.Editor.Race
 
             GameObject playAgain = Instantiate(SecondaryButtonPrefab, backplate);
             playAgain.name = "PlayAgainButton";
-            SetButtonLabel(playAgain, "Play Again", 20f);
+            SetButtonLabel(playAgain, "Play Again", 30f);
+            SizeButton(playAgain, 320f, 72f);
 
             GameObject playground = Instantiate(SecondaryButtonPrefab, backplate);
             playground.name = "PlaygroundButton";
-            SetButtonLabel(playground, "Back to Playground", 20f);
+            SetButtonLabel(playground, "Back to Playground", 30f);
+            SizeButton(playground, 320f, 72f);
 
-            GameObject settings = Instantiate(SecondaryButtonPrefab, backplate);
-            settings.name = "SettingsButton";
-            SetButtonLabel(settings, "Driver Menu", 20f);
-
-            canvasRoot.sizeDelta = new Vector2(400f, 260f);
-            backplate.sizeDelta = new Vector2(400f, 260f);
-
-            DriverSettingsMenu settingsMenu = UnityEngine.Object.FindAnyObjectByType<DriverSettingsMenu>(FindObjectsInactive.Include);
+            canvasRoot.sizeDelta = new Vector2(400f, 280f);
+            backplate.sizeDelta = new Vector2(400f, 280f);
 
             var serialized = new SerializedObject(menu);
             serialized.FindProperty("panel").objectReferenceValue = panel;
             serialized.FindProperty("playAgainButton").objectReferenceValue = playAgain.GetComponent<Button>();
             serialized.FindProperty("playgroundButton").objectReferenceValue = playground.GetComponent<Button>();
-            serialized.FindProperty("settingsButton").objectReferenceValue = settings.GetComponent<Button>();
             serialized.FindProperty("trackLoader").objectReferenceValue = trackLoader;
-            serialized.FindProperty("settingsMenu").objectReferenceValue = settingsMenu;
             serialized.FindProperty("seat").objectReferenceValue = seat;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
@@ -343,6 +338,20 @@ namespace XrRacing.Editor.Race
             tmp.textWrappingMode = TextWrappingModes.NoWrap;
             tmp.raycastTarget = false;
             return tmp;
+        }
+
+        private static void SizeButton(GameObject button, float width, float height)
+        {
+            ((RectTransform)button.transform).sizeDelta = new Vector2(width, height);
+            var layoutElement = button.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+            {
+                layoutElement = button.AddComponent<LayoutElement>();
+            }
+            layoutElement.minWidth = width;
+            layoutElement.preferredWidth = width;
+            layoutElement.minHeight = height;
+            layoutElement.preferredHeight = height;
         }
 
         private static void SetButtonLabel(GameObject button, string text, float fontSize)

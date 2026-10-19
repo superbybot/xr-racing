@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.VFX;
@@ -326,15 +326,21 @@ namespace KartGame.KartSystems
         void GatherInputs()
         {
             // reset input
-            Input = new InputData();
+            InputData combined = new InputData();
             WantsToDrift = false;
 
-            // gather nonzero input from our sources
+            // gather and combine input from all sources
             for (int i = 0; i < m_Inputs.Length; i++)
             {
-                Input = m_Inputs[i].GenerateInput();
-                WantsToDrift = Input.Brake > k_DriftBrakeThreshold && Vector3.Dot(Rigidbody.linearVelocity, transform.forward) > 0.0f;
+                InputData data = m_Inputs[i].GenerateInput();
+                if (Mathf.Abs(data.Accelerate) > k_NullInput) combined.Accelerate = Mathf.Max(combined.Accelerate, data.Accelerate);
+                if (Mathf.Abs(data.Brake) > k_NullInput) combined.Brake = Mathf.Max(combined.Brake, data.Brake);
+                if (Mathf.Abs(data.TurnInput) > k_NullInput) combined.TurnInput = Mathf.Clamp(combined.TurnInput + data.TurnInput, -1f, 1f);
             }
+
+            Input = combined;
+
+            WantsToDrift = Input.Brake > k_DriftBrakeThreshold && Vector3.Dot(Rigidbody.linearVelocity, transform.forward) > 0.0f;
         }
 
         void TickPowerups()

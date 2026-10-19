@@ -8,7 +8,7 @@ namespace XrRacing.Gameplay.UI
 {
     /// <summary>
     /// Modal dialog presented to the player when a race finishes.
-    /// Offers options to 'Play Again', return to 'Physics Playground', or open the driver settings.
+    /// Offers options to 'Play Again' or return to the 'Physics Playground'.
     /// </summary>
     public class RaceEndingMenu : MonoBehaviour
     {
@@ -18,12 +18,8 @@ namespace XrRacing.Gameplay.UI
         [SerializeField] private Button playAgainButton;
         [Tooltip("Button to load the Physics Playground sandbox.")]
         [SerializeField] private Button playgroundButton;
-        [Tooltip("Button to open the driver settings menu.")]
-        [SerializeField] private Button settingsButton;
         [Tooltip("TrackLoader reference for switching tracks or respawning.")]
         [SerializeField] private TrackLoader trackLoader;
-        [Tooltip("DriverSettingsMenu reference.")]
-        [SerializeField] private DriverSettingsMenu settingsMenu;
         [Tooltip("DriverSeatAdjuster reference to position in front of driver head.")]
         [SerializeField] private DriverSeatAdjuster seat;
         [Tooltip("Distance in front of driver head (meters).")]
@@ -39,11 +35,6 @@ namespace XrRacing.Gameplay.UI
             if (playgroundButton != null)
             {
                 playgroundButton.onClick.AddListener(OnBackToPlayground);
-            }
-
-            if (settingsButton != null)
-            {
-                settingsButton.onClick.AddListener(OnOpenSettings);
             }
 
             if (panel != null)
@@ -101,15 +92,6 @@ namespace XrRacing.Gameplay.UI
 
             // Fallback to first track if named differently
             trackLoader.RequestTrack(0);
-        }
-
-        private void OnOpenSettings()
-        {
-            Close();
-            if (settingsMenu != null)
-            {
-                settingsMenu.Open();
-            }
         }
 
         private void PlaceInFrontOfHead()

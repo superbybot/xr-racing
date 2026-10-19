@@ -2,6 +2,7 @@ using System;
 using TMPro;
 using UnityEngine;
 using XrRacing.Gameplay.UI;
+using XrRacing.Gameplay.Vehicle;
 
 namespace XrRacing.Gameplay.UI
 {
@@ -23,6 +24,37 @@ namespace XrRacing.Gameplay.UI
         [SerializeField] private Color finalLapColor = new Color(1f, 0.75f, 0f, 1f); // Gold / amber accent
         [Tooltip("Color of the GOAAAAL text.")]
         [SerializeField] private Color goalColor = new Color(0.1f, 0.9f, 0.3f, 1f); // Green accent
+        [Tooltip("Seat whose head the card turns to face. Falls back to the main camera.")]
+        [SerializeField] private DriverSeatAdjuster seat;
+
+        private Transform GetHead()
+        {
+            if (seat != null && seat.Head != null)
+            {
+                return seat.Head;
+            }
+            return Camera.main != null ? Camera.main.transform : null;
+        }
+
+        private void LateUpdate()
+        {
+            if (panel == null || !panel.activeInHierarchy)
+            {
+                return;
+            }
+
+            Transform head = GetHead();
+            if (head == null)
+            {
+                return;
+            }
+
+            Vector3 toPanel = panel.transform.position - head.position;
+            if (toPanel.sqrMagnitude > 0.0001f)
+            {
+                panel.transform.rotation = Quaternion.LookRotation(toPanel, Vector3.up);
+            }
+        }
 
         private void Awake()
         {

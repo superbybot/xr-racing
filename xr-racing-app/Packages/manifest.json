@@ -3,9 +3,9 @@
     "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity",
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
     "com.github-glitchenzo.nugetforunity": "https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity",
-    "com.meta.xr.sdk.core": "205.0.0",
+    "com.meta.xr.sdk.core": "207.0.0",
     "com.meta.xr.sdk.interaction": "205.0.0",
-    "com.meta.xr.sdk.interaction.ovr": "205.0.0",
+    "com.meta.xr.sdk.interaction.ovr": "207.0.0",
     "com.meta.xr.sdk.movement": "https://github.com/oculus-samples/Unity-Movement.git",
     "com.unity.ai.navigation": "2.0.13",
     "com.unity.cinemachine": "3.1.7",
@@ -58,6 +58,7 @@
     "com.unity.modules.vehicles": "1.0.0",
     "com.unity.modules.video": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
-    "com.unity.modules.xr": "1.0.0"
+    "com.unity.modules.xr": "1.0.0",
+    "com.unity.pipeline": "0.8.0-exp.1"
   }
 }
