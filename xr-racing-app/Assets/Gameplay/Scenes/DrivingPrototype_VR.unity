@@ -4809,7 +4809,7 @@ MonoBehaviour:
   respawnButton: {fileID: 0}
   selectedTextColor: {r: 1, g: 1, b: 1, a: 1}
   distanceFromHead: 0.5
-  belowEyes: 0.1
+  belowEyes: -0.02
   followAngle: 25
   followDistance: 0.2
   followTime: 0.3

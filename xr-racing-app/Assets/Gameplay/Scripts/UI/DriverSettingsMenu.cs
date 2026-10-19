@@ -99,8 +99,8 @@ namespace XrRacing.Gameplay.UI
         [SerializeField] private Color selectedTextColor = Color.white;
         [Tooltip("How far in front of the head the panel sits (meters).")]
         [SerializeField] private float distanceFromHead = 0.5f;
-        [Tooltip("How far below eye level the panel's center sits (meters).")]
-        [SerializeField] private float belowEyes = 0.1f;
+        [Tooltip("How far below eye level the panel's center sits (meters); negative puts it above, clear of the steering wheel.")]
+        [SerializeField] private float belowEyes = -0.02f;
         [Tooltip("The panel starts following once it's this many degrees away from where the head is facing.")]
         [SerializeField] private float followAngle = 25f;
         [Tooltip("...or once the head has moved this far (meters) from where the panel expects it.")]
@@ -367,7 +367,7 @@ namespace XrRacing.Gameplay.UI
 
             forward.Normalize();
             position = head.position + forward * distanceFromHead - Vector3.up * belowEyes;
-            rotation = Quaternion.LookRotation(forward, Vector3.up);
+            rotation = Quaternion.LookRotation(position - head.position, Vector3.up);
             return true;
         }
 
