@@ -6,7 +6,12 @@
         "Oculus.Interaction",
         "Unity.TextMeshPro",
         "Unity.RenderPipelines.Universal.Runtime",
-        "Unity.RenderPipelines.Core.Runtime"
+        "Unity.RenderPipelines.Core.Runtime",
+        "Oculus.VR",
+        "Meta.XR.Movement",
+        "Meta.XR.Movement.Editor",
+        "Unity.Recorder",
+        "Unity.Recorder.Editor"
     ],
     "includePlatforms": [
         "Editor"
