@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using Meta.XR.Movement;
+using Meta.XR.Movement.AI;
 using Meta.XR.Movement.Editor;
 using Meta.XR.Movement.Retargeting;
 using Meta.XR.Movement.Utils;
@@ -24,6 +25,7 @@ namespace XrRacing.Editor.Characters
         private const string ScenePath = "Assets/Gameplay/Scenes/CharacterTest.unity";
         private const string CharacterModelPath = "Assets/References/Karting Reference/Art/Models/Player.FBX";
         private const string CameraRigPrefabPath = "Packages/com.meta.xr.sdk.core/Prefabs/OVRCameraRig.prefab";
+        private const string SynthesizerDataPath = "Packages/com.meta.xr.sdk.movement/Runtime/Native/Data/";
         // Distance from the player (standing at the origin, facing +Z) to the mirror plane.
         private const float MirrorDistance = 1.5f;
 
@@ -161,8 +163,55 @@ namespace XrRacing.Editor.Characters
 
             KeepCharacterProportions(retargeter);
             AddFingerSpreadTuner(character);
+            AddJoystickWalking(character, rig);
             AddSimulatorDriver(character, rig, retargeter);
             return character;
+        }
+
+        /// <summary>
+        /// Left-stick walking: the Movement SDK's AI Motion Synthesizer generates the legs from joystick input while
+        /// body tracking keeps driving the upper body, and the character's root follows the camera rig, which
+        /// <see cref="JoystickRigMover"/> slides at the same velocity the legs walk at.
+        /// </summary>
+        private static void AddJoystickWalking(GameObject character, GameObject rig)
+        {
+            var sourceData = character.GetComponent<MetaSourceDataProvider>();
+            if (rig == null || sourceData == null)
+            {
+                return;
+            }
+
+            var joystick = character.AddComponent<AIMotionSynthesizerJoystickInput>();
+            var serializedJoystick = new SerializedObject(joystick);
+            // Push forward to walk where you're looking.
+            serializedJoystick.FindProperty("_referenceTransform").objectReferenceValue =
+                rig.transform.Find("TrackingSpace/CenterEyeAnchor");
+            serializedJoystick.ApplyModifiedPropertiesWithoutUndo();
+
+            var serializedSource = new SerializedObject(sourceData);
+            serializedSource.FindProperty("_enableAIMotionSynthesizer").boolValue = true;
+            var config = serializedSource.FindProperty("_aiMotionSynthesizerConfig");
+            config.FindPropertyRelative("Config").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<TextAsset>(SynthesizerDataPath + "AIMotionSynthesizerSkeletonData.json");
+            config.FindPropertyRelative("ModelAsset").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<TextAsset>(SynthesizerDataPath + "AIMotionSynthesizerModel.bytes");
+            config.FindPropertyRelative("GuidanceAsset").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<TextAsset>(SynthesizerDataPath + "AIMotionSynthesizerGuidance.bytes");
+            config.FindPropertyRelative("InputProvider").objectReferenceValue = joystick;
+            config.FindPropertyRelative("RootMotionMode").intValue = (int)RootMotionMode.ApplyFromReference;
+            config.FindPropertyRelative("ReferenceTransform").objectReferenceValue = rig.transform;
+            config.FindPropertyRelative("UpperBodySource").intValue =
+                (int)MSDKAIMotionSynthesizer.PoseSource.BodyTracking;
+            config.FindPropertyRelative("LowerBodySource").intValue =
+                (int)MSDKAIMotionSynthesizer.PoseSource.AIMotionSynthesizer;
+            config.FindPropertyRelative("BlendMode").intValue = (int)BlendMode.Input;
+            serializedSource.ApplyModifiedPropertiesWithoutUndo();
+
+            var mover = character.AddComponent<JoystickRigMover>();
+            var serializedMover = new SerializedObject(mover);
+            serializedMover.FindProperty("_rig").objectReferenceValue = rig.transform;
+            serializedMover.FindProperty("_inputProvider").objectReferenceValue = joystick;
+            serializedMover.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static void AddFingerSpreadTuner(GameObject character)

@@ -11,7 +11,8 @@
         "Unity.XR.Interaction.Toolkit",
         "UniTask",
         "Fusion.Unity",
-        "Unity.ML-Agents"
+        "Unity.ML-Agents",
+        "Meta.XR.Movement"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -168,6 +168,11 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!4 &121887966 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 400004, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
+  m_PrefabInstance: {fileID: 1060435012}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &386181405
 GameObject:
   m_ObjectHideFlags: 0
@@ -1219,6 +1224,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1649100181}
   - component: {fileID: 1649100180}
+  - component: {fileID: 1649100182}
   m_Layer: 0
   m_Name: Directional Light
   m_TagString: Untagged
@@ -1306,6 +1312,35 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1649100182
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1649100179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1001 &1710821219
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1374,6 +1409,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 100064, guid: 6efe54ae207d7bb46a4adca3c0143126, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1710821290}
+    - targetCorrespondingSourceObject: {fileID: 100064, guid: 6efe54ae207d7bb46a4adca3c0143126, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1710821292}
+    - targetCorrespondingSourceObject: {fileID: 100064, guid: 6efe54ae207d7bb46a4adca3c0143126, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1710821291}
   m_SourcePrefab: {fileID: 100100000, guid: 6efe54ae207d7bb46a4adca3c0143126, type: 3}
 --- !u!4 &1710821220 stripped
 Transform:
@@ -1750,14 +1791,14 @@ MonoBehaviour:
   _validBodyTrackingDelay: 0.25
   _debugDrawSkeleton: 0
   _debugSkeletonColor: {r: 1, g: 1, b: 1, a: 1}
-  _enableAIMotionSynthesizer: 0
+  _enableAIMotionSynthesizer: 1
   _aiMotionSynthesizerConfig:
-    Config: {fileID: 0}
-    ModelAsset: {fileID: 0}
-    GuidanceAsset: {fileID: 0}
-    InputProvider: {fileID: 0}
+    Config: {fileID: 4900000, guid: 2daf6a3a621fc694cb3e41036fcba525, type: 3}
+    ModelAsset: {fileID: 4900000, guid: 87370038fff43cb45aacf743d9b307b9, type: 3}
+    GuidanceAsset: {fileID: 4900000, guid: 5e470afddd8660540bf4e1c8ff20ead7, type: 3}
+    InputProvider: {fileID: 1710821292}
     RootMotionMode: 1
-    ReferenceTransform: {fileID: 0}
+    ReferenceTransform: {fileID: 121887966}
     EnableSynthesizedStandingPose: 0
     UpperBodySource: 0
     LowerBodySource: 1
@@ -1947,9 +1988,57 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: XrRacing.Gameplay::XrRacing.Gameplay.Characters.FingerSpreadTuner
   _animator: {fileID: 1710821221}
-  _index: 0
+  _index: -15
+  _middle: 0
   _ring: 0
   _little: 0
+  _indexOffset: 3.6
+  _middleOffset: 0.45
+  _ringOffset: 1.62
+  _littleOffset: 5
+--- !u!114 &1710821291
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1710821286}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40020f748a4b4c71b8cdd7d288e66fda, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: XrRacing.Gameplay::XrRacing.Gameplay.Characters.JoystickRigMover
+  _rig: {fileID: 121887966}
+  _inputProvider: {fileID: 1710821292}
+--- !u!114 &1710821292
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1710821286}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13f1ea40dce85ed428082d743c4f66fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Meta.XR.Movement::Meta.XR.Movement.AI.AIMotionSynthesizerJoystickInput
+  _inputMode: 0
+  _referenceTransform: {fileID: 1060435016}
+  _moveAction: {fileID: 0}
+  _lookAction: {fileID: 0}
+  _sprintAction: {fileID: 0}
+  _mainController: 1
+  _moveAxis: 1
+  _lookAxis: 2
+  _sprintButton: 131072
+  _speedFactor: 2.5
+  _sprintSpeedFactor: 4.5
+  _acceleration: 5
+  _groundDamping: 40
+  _joystickThreshold: 0.25
+  _movementDirectionMode: 0
+  _facingDirectionMode: 0
+  _lockDirectionOnInputStart: 0
 --- !u!1 &1786520070
 GameObject:
   m_ObjectHideFlags: 0

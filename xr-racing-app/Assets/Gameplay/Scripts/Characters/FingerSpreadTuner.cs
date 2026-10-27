@@ -15,16 +15,16 @@ namespace XrRacing.Gameplay.Characters
         [SerializeField] private Animator _animator;
 
         [Header("Angle away from the middle finger (degrees); middle: toward the index finger")]
-        [Range(-20f, 30f)] [SerializeField] private float _index;
+        [Range(-20f, 30f)] [SerializeField] private float _index = -15f;
         [Range(-20f, 30f)] [SerializeField] private float _middle;
         [Range(-20f, 30f)] [SerializeField] private float _ring;
         [Range(-20f, 30f)] [SerializeField] private float _little;
 
         [Header("Knuckle slide away from the middle finger (cm); middle: toward the index finger")]
-        [Range(-2f, 5f)] [SerializeField] private float _indexOffset;
-        [Range(-2f, 5f)] [SerializeField] private float _middleOffset;
-        [Range(-2f, 5f)] [SerializeField] private float _ringOffset;
-        [Range(-2f, 5f)] [SerializeField] private float _littleOffset;
+        [Range(-2f, 5f)] [SerializeField] private float _indexOffset = 3.6f;
+        [Range(-2f, 5f)] [SerializeField] private float _middleOffset = 0.45f;
+        [Range(-2f, 5f)] [SerializeField] private float _ringOffset = 1.62f;
+        [Range(-2f, 5f)] [SerializeField] private float _littleOffset = 5f;
 
         private struct Finger
         {
