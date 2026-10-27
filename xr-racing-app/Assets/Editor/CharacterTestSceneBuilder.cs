@@ -1,12 +1,14 @@
 using System;
 using System.IO;
 using System.Reflection;
+using Meta.XR.Movement;
 using Meta.XR.Movement.Editor;
 using Meta.XR.Movement.Retargeting;
 using Meta.XR.Movement.Utils;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using XrRacing.Gameplay.Characters;
 
 namespace XrRacing.Editor.Characters
 {
@@ -53,9 +55,9 @@ namespace XrRacing.Editor.Characters
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             CreateEnvironment();
-            CreateCameraRig();
+            var rig = CreateCameraRig();
 
-            var playerCharacter = CreatePlayerCharacter(model);
+            var playerCharacter = CreatePlayerCharacter(model, rig);
             if (playerCharacter == null)
             {
                 return;
@@ -105,13 +107,13 @@ namespace XrRacing.Editor.Characters
             floor.transform.localScale = new Vector3(2f, 1f, 2f);
         }
 
-        private static void CreateCameraRig()
+        private static GameObject CreateCameraRig()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CameraRigPrefabPath);
             if (prefab == null)
             {
                 Report("OVRCameraRig prefab not found at " + CameraRigPrefabPath);
-                return;
+                return null;
             }
 
             var rig = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
@@ -120,20 +122,22 @@ namespace XrRacing.Editor.Characters
             var manager = rig.GetComponent<OVRManager>();
             if (manager == null)
             {
-                return;
+                return rig;
             }
 
             var serializedManager = new SerializedObject(manager);
             serializedManager.FindProperty("requestBodyTrackingPermissionOnStartup").boolValue = true;
             serializedManager.FindProperty("_trackingOriginType").intValue = (int)OVRManager.TrackingOrigin.FloorLevel;
             serializedManager.ApplyModifiedPropertiesWithoutUndo();
+            return rig;
         }
 
         /// <summary>
         /// The character the player embodies, at the tracking-space origin, with CharacterRetargeter and
-        /// MetaSourceDataProvider added by the Movement SDK's own setup.
+        /// MetaSourceDataProvider added by the Movement SDK's own setup, plus a head-and-hands driver that takes over
+        /// in the Meta XR Simulator (which replays a fixed body pose instead of tracking the user).
         /// </summary>
-        private static GameObject CreatePlayerCharacter(GameObject model)
+        private static GameObject CreatePlayerCharacter(GameObject model, GameObject rig)
         {
             var character = (GameObject)PrefabUtility.InstantiatePrefab(model);
             character.name = "PlayerCharacter";
@@ -148,13 +152,67 @@ namespace XrRacing.Editor.Characters
                 Debug.LogException(e);
             }
 
-            if (character.GetComponent<CharacterRetargeter>() == null)
+            var retargeter = character.GetComponent<CharacterRetargeter>();
+            if (retargeter == null)
             {
                 Report("Adding the Movement SDK CharacterRetargeter failed; see the Console.");
                 return null;
             }
 
+            KeepCharacterProportions(retargeter);
+            AddFingerSpreadTuner(character);
+            AddSimulatorDriver(character, rig, retargeter);
             return character;
+        }
+
+        private static void AddFingerSpreadTuner(GameObject character)
+        {
+            var tuner = character.AddComponent<FingerSpreadTuner>();
+            var serializedTuner = new SerializedObject(tuner);
+            serializedTuner.FindProperty("_animator").objectReferenceValue = character.GetComponent<Animator>();
+            serializedTuner.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>
+        /// The default "Source Body Proportions" resizes every bone to the player's own lengths, which squashes this
+        /// cartoon's oversized mitten hands into the palm and kinks its forearms. Keep the model's bone lengths and
+        /// retarget rotations only.
+        /// </summary>
+        private static void KeepCharacterProportions(CharacterRetargeter retargeter)
+        {
+            var serializedRetargeter = new SerializedObject(retargeter);
+            serializedRetargeter.FindProperty("_skeletonRetargeter._retargetingBehavior").intValue =
+                (int)MSDKUtility.RetargetingBehavior.RotationOnlyNoScaling;
+            serializedRetargeter.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void AddSimulatorDriver(GameObject character, GameObject rig, CharacterRetargeter retargeter)
+        {
+            if (rig == null)
+            {
+                return;
+            }
+
+            var driver = character.AddComponent<HeadAndHandsAvatarDriver>();
+            var serializedDriver = new SerializedObject(driver);
+            serializedDriver.FindProperty("_animator").objectReferenceValue = character.GetComponent<Animator>();
+            serializedDriver.FindProperty("_head").objectReferenceValue =
+                rig.transform.Find("TrackingSpace/CenterEyeAnchor");
+            serializedDriver.FindProperty("_leftHand").objectReferenceValue =
+                rig.transform.Find("TrackingSpace/LeftHandAnchor");
+            serializedDriver.FindProperty("_rightHand").objectReferenceValue =
+                rig.transform.Find("TrackingSpace/RightHandAnchor");
+
+            var bodyTracking = serializedDriver.FindProperty("_bodyTrackingBehaviours");
+            var sourceData = character.GetComponent<MetaSourceDataProvider>();
+            bodyTracking.arraySize = sourceData != null ? 2 : 1;
+            bodyTracking.GetArrayElementAtIndex(0).objectReferenceValue = retargeter;
+            if (sourceData != null)
+            {
+                bodyTracking.GetArrayElementAtIndex(1).objectReferenceValue = sourceData;
+            }
+
+            serializedDriver.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static void CreateMirror(GameObject model, Transform playerCharacter)
