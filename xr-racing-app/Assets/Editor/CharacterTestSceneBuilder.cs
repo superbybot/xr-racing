@@ -6,6 +6,7 @@ using Meta.XR.Movement.AI;
 using Meta.XR.Movement.Editor;
 using Meta.XR.Movement.Retargeting;
 using Meta.XR.Movement.Utils;
+using Newtonsoft.Json.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -14,20 +15,46 @@ using XrRacing.Gameplay.Characters;
 namespace XrRacing.Editor.Characters
 {
     /// <summary>
-    /// Builds a standalone scene for testing the player's 3D character: an OVRCameraRig, the Karting driver
-    /// (the character inside the kart prefab) driven by Movement SDK body/hand tracking, and a "mirror" in front
-    /// of the player. The mirror is a second copy of the character that copies the tracked pose every frame
-    /// (Movement SDK MirrorTransforms) under a parent with a negative Z scale, so it shows a reflection.
-    /// Safe to re-run: it overwrites the scene and reuses the existing retargeting config.
+    /// Builds a standalone scene for testing the player's 3D character: an OVRCameraRig with Interaction SDK
+    /// controller rays, one body-tracked player character per entry in <see cref="Characters"/> (only the selected
+    /// one active), a "mirror" in front of the player, and a lineup of the characters to point at and pick from.
+    /// The mirror is a second copy of the character that copies the tracked pose every frame (Movement SDK
+    /// MirrorTransforms) under a parent with a negative Z scale, so it shows a reflection.
+    /// Safe to re-run: it overwrites the scene and reuses each character's existing retargeting config.
     /// </summary>
     public static class CharacterTestSceneBuilder
     {
         private const string ScenePath = "Assets/Gameplay/Scenes/CharacterTest.unity";
-        private const string CharacterModelPath = "Assets/References/Karting Reference/Art/Models/Player.FBX";
+        private const string KartingPath = "Assets/References/Karting Reference/";
         private const string CameraRigPrefabPath = "Packages/com.meta.xr.sdk.core/Prefabs/OVRCameraRig.prefab";
+        private const string InteractionRigPrefabPath =
+            "Packages/com.meta.xr.sdk.interaction.ovr/Runtime/Prefabs/OVRComprehensiveInteractionRig.prefab";
         private const string SynthesizerDataPath = "Packages/com.meta.xr.sdk.movement/Runtime/Native/Data/";
         // Distance from the player (standing at the origin, facing +Z) to the mirror plane.
         private const float MirrorDistance = 1.5f;
+        // The lineup stands in an arc on the player's right, this far away, with enough angle between models that
+        // their T-posed arms don't overlap.
+        private const float LineupRadius = 2.6f;
+        private const float LineupFirstAngle = 35f;
+        private const float LineupAngleStep = 33f;
+
+        // The first entry is the default. Every character gets the FingerSpreadTuner defaults tuned on its hands;
+        // only its config (Player.json) also has finger spread baked into the T-pose.
+        private static readonly (string Label, string AssetPath)[] Characters =
+        {
+            ("Driver", KartingPath + "Art/Models/Player.FBX"),
+            ("Cat", KartingPath + "AddOns/MgKarting_CatRacer/Prefabs/CatRacer_Body.prefab"),
+            ("Chicken", KartingPath + "AddOns/MgKarting_ChickenRacer/Prefabs/ChickenRacer_Body.prefab"),
+            ("Knight", KartingPath + "AddOns/MgKarting_KnightRacer/Prefabs/KnightRacer_Body.prefab")
+        };
+
+        // Interaction rig parts the scene doesn't want: its ghost hands and controller models would draw over the
+        // avatar's own hands, and its thumbstick teleport would fight the left-stick walking.
+        private static readonly string[] HiddenInteractionParts =
+        {
+            "OVRHandVisualLeft", "OVRHandVisualRight", "OVRControllerVisualLeft", "OVRControllerVisualRight",
+            "LocomotionControllerInteractorGroup", "MicroGesturesLocomotionHandInteractorGroup"
+        };
 
         [MenuItem("XR Racing/Build Character Test Scene")]
         public static void Build()
@@ -43,29 +70,56 @@ namespace XrRacing.Editor.Characters
                 return;
             }
 
-            var model = AssetDatabase.LoadAssetAtPath<GameObject>(CharacterModelPath);
-            if (model == null)
+            var models = new GameObject[Characters.Length];
+            for (var i = 0; i < Characters.Length; i++)
             {
-                Report("Character model not found at " + CharacterModelPath);
-                return;
-            }
+                models[i] = AssetDatabase.LoadAssetAtPath<GameObject>(Characters[i].AssetPath);
+                if (models[i] == null)
+                {
+                    Report("Character model not found at " + Characters[i].AssetPath);
+                    return;
+                }
 
-            if (!EnsureRetargetingConfig(model))
-            {
-                return;
+                if (!EnsureRetargetingConfig(models[i]))
+                {
+                    return;
+                }
             }
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             CreateEnvironment();
             var rig = CreateCameraRig();
+            AddInteractionRig(rig);
 
-            var playerCharacter = CreatePlayerCharacter(model, rig);
-            if (playerCharacter == null)
+            var mirrorSpace = CreateMirrorSpace();
+            var lineup = new GameObject("CharacterLineup").AddComponent<CharacterLineup>();
+            var players = new GameObject[Characters.Length];
+            var reflections = new GameObject[Characters.Length];
+            var labels = new TMPro.TMP_Text[Characters.Length];
+            for (var i = 0; i < Characters.Length; i++)
             {
-                return;
+                var name = i == 0 ? "PlayerCharacter" : "PlayerCharacter_" + Characters[i].Label;
+                var body = CreatePlayerCharacter(models[i], rig, name);
+                if (body == null)
+                {
+                    return;
+                }
+
+                // The whole instance (head and accessories included) is what the lineup switches on and off.
+                players[i] = body.transform.root.gameObject;
+                reflections[i] = CreateReflection(models[i], body.transform, mirrorSpace,
+                    name.Replace("PlayerCharacter", "PlayerReflection"));
+                labels[i] = CreateLineupOption(models[i], Characters[i].Label, i, lineup);
             }
 
-            CreateMirror(model, playerCharacter.transform);
+            // Deactivated last: the mirror's bone pairing above needs the characters active.
+            for (var i = 1; i < Characters.Length; i++)
+            {
+                players[i].SetActive(false);
+                reflections[i].SetActive(false);
+            }
+
+            SetLineupChoices(lineup, players, reflections, labels);
 
             if (!EditorSceneManager.SaveScene(scene, ScenePath))
             {
@@ -77,25 +131,148 @@ namespace XrRacing.Editor.Characters
         }
 
         /// <summary>
-        /// Runs the Movement SDK's headless retargeting setup for the model unless its config JSON already exists
-        /// next to the model. Returns false (after reporting) if no config could be produced.
+        /// The rigged model inside a character asset: the asset itself for a bare FBX, or the FBX instance that the
+        /// racer prefabs nest under a plain root alongside their head and accessories.
         /// </summary>
-        private static bool EnsureRetargetingConfig(GameObject model)
+        private static GameObject FindBody(GameObject character)
         {
-            var configPath = Path.ChangeExtension(CharacterModelPath, ".json");
-            if (AssetDatabase.LoadAssetAtPath<TextAsset>(configPath) != null)
+            var animator = character.GetComponentInChildren<Animator>(true);
+            return animator != null ? animator.gameObject : null;
+        }
+
+        /// <summary>
+        /// The racer FBXs (Blender exports) put an armature node rotated -90° on X between the body and its root
+        /// bone, which the root bone cancels with +90°. The retargeter writes the root bone's rotation as if its
+        /// parent were the body, dropping that +90° and laying the whole skeleton on its back, so zero the armature
+        /// node's rotation while keeping the root bone's world rotation. Skinning follows the bones, so the mesh is
+        /// unchanged. The racers' karting animator controller also goes: it writes the armature node's -90° back
+        /// every frame, and the retargeter doesn't need it.
+        /// </summary>
+        private static void FlattenArmatureRotation(GameObject body)
+        {
+            var animator = body.GetComponent<Animator>();
+            var hips = animator != null ? animator.GetBoneTransform(HumanBodyBones.Hips) : null;
+            if (hips == null && animator != null && animator.avatar != null)
+            {
+                // The cat's Animator doesn't resolve its bones in edit mode, though its avatar maps them.
+                var hipsName = Array.Find(animator.avatar.humanDescription.human, bone => bone.humanName == "Hips")
+                    .boneName;
+                hips = Array.Find(body.GetComponentsInChildren<Transform>(true), bone => bone.name == hipsName);
+            }
+
+            var rootBone = hips != null ? hips.parent : null;
+            var armature = rootBone != null ? rootBone.parent : null;
+            if (armature == null || armature == body.transform)
+            {
+                return;
+            }
+
+            animator.runtimeAnimatorController = null;
+            var rootRotation = rootBone.rotation;
+            armature.localRotation = Quaternion.identity;
+            rootBone.rotation = rootRotation;
+        }
+
+        /// <summary>
+        /// Freezes a lineup display in the T-pose from its retargeting config instead of the racers' karting
+        /// animation. The config's T-pose rotations are relative to the rigged body.
+        /// </summary>
+        private static void PoseInTPose(GameObject display, GameObject model)
+        {
+            var body = FindBody(display);
+            var fbx = PrefabUtility.GetCorrespondingObjectFromOriginalSource(FindBody(model));
+            var config = AssetDatabase.LoadAssetAtPath<TextAsset>(
+                Path.ChangeExtension(AssetDatabase.GetAssetPath(fbx), ".json"));
+            if (body == null || config == null)
+            {
+                return;
+            }
+
+            body.GetComponent<Animator>().enabled = false;
+
+            var bones = new System.Collections.Generic.Dictionary<string, Transform>();
+            foreach (var bone in body.GetComponentsInChildren<Transform>(true))
+            {
+                bones.TryAdd(bone.name, bone);
+            }
+
+            // Joints are listed parents first, so setting world rotations in order keeps each child's result.
+            foreach (var joint in ((JObject)JObject.Parse(config.text)["target"]["tpose"]).Properties())
+            {
+                if (!bones.TryGetValue(joint.Name, out var bone))
+                {
+                    continue;
+                }
+
+                var rotation = joint.Value["rotation"];
+                bone.rotation = body.transform.rotation * new Quaternion((float)rotation["x"], (float)rotation["y"],
+                    (float)rotation["z"], (float)rotation["w"]);
+            }
+        }
+
+        /// <summary>
+        /// Runs the Movement SDK's headless retargeting setup on the character's rigged FBX unless its config JSON
+        /// already exists next to it. The FBX rather than the racer prefab: the setup overflows its stack on the
+        /// prefabs' extra head and accessory objects. Returns false (after reporting) if no config could be produced.
+        /// </summary>
+        private static bool EnsureRetargetingConfig(GameObject character)
+        {
+            var body = FindBody(character);
+            var fbx = body != null ? PrefabUtility.GetCorrespondingObjectFromOriginalSource(body) : null;
+            var fbxPath = fbx != null ? AssetDatabase.GetAssetPath(fbx) : null;
+            if (string.IsNullOrEmpty(fbxPath))
+            {
+                Report("No rigged model found in " + AssetDatabase.GetAssetPath(character));
+                return false;
+            }
+
+            if (AssetDatabase.LoadAssetAtPath<TextAsset>(Path.ChangeExtension(fbxPath, ".json")) != null)
             {
                 return true;
             }
 
-            var metadata = MSDKUtilityEditor.RunDefaultRetargetingSetup(model);
+            var metadata = MSDKUtilityEditor.RunDefaultRetargetingSetup(AssetDatabase.LoadAssetAtPath<GameObject>(fbxPath));
             if (metadata == null || metadata.ConfigJson == null)
             {
-                Report("Movement SDK retargeting setup failed for " + CharacterModelPath + "; see the Console.");
+                Report("Movement SDK retargeting setup failed for " + fbxPath + "; see the Console.");
                 return false;
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Adds the Interaction SDK rig (the same one the kart uses) so the controllers cast rays at the lineup.
+        /// </summary>
+        private static void AddInteractionRig(GameObject rig)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(InteractionRigPrefabPath);
+            if (rig == null || prefab == null)
+            {
+                Debug.LogWarning("[CharacterTestSceneBuilder] Interaction rig not added; the lineup can't be pointed at.");
+                return;
+            }
+
+            var interaction = (GameObject)PrefabUtility.InstantiatePrefab(prefab, rig.transform);
+
+            // OVRCameraRigRef lives in Oculus.Interaction.OVR, which the editor assembly doesn't reference.
+            foreach (var behaviour in interaction.GetComponentsInChildren<MonoBehaviour>(true))
+            {
+                if (behaviour != null && behaviour.GetType().Name == "OVRCameraRigRef")
+                {
+                    var serializedRef = new SerializedObject(behaviour);
+                    serializedRef.FindProperty("_ovrCameraRig").objectReferenceValue = rig.GetComponent<OVRCameraRig>();
+                    serializedRef.ApplyModifiedPropertiesWithoutUndo();
+                }
+            }
+
+            foreach (var part in interaction.GetComponentsInChildren<Transform>(true))
+            {
+                if (Array.IndexOf(HiddenInteractionParts, part.name) >= 0)
+                {
+                    part.gameObject.SetActive(false);
+                }
+            }
         }
 
         private static void CreateEnvironment()
@@ -135,15 +312,19 @@ namespace XrRacing.Editor.Characters
         }
 
         /// <summary>
-        /// The character the player embodies, at the tracking-space origin, with CharacterRetargeter and
+        /// A character the player embodies, at the tracking-space origin, with CharacterRetargeter and
         /// MetaSourceDataProvider added by the Movement SDK's own setup, plus a head-and-hands driver that takes over
-        /// in the Meta XR Simulator (which replays a fixed body pose instead of tracking the user).
+        /// in the Meta XR Simulator (which replays a fixed body pose instead of tracking the user). Returns the rigged
+        /// body, which carries all of these; for the racer prefabs it's a child of the instance root.
         /// </summary>
-        private static GameObject CreatePlayerCharacter(GameObject model, GameObject rig)
+        private static GameObject CreatePlayerCharacter(GameObject model, GameObject rig, string name)
         {
-            var character = (GameObject)PrefabUtility.InstantiatePrefab(model);
-            character.name = "PlayerCharacter";
-            character.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(model);
+            instance.name = name;
+            instance.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            var character = FindBody(instance);
+
+            FlattenArmatureRotation(character);
 
             try
             {
@@ -214,6 +395,10 @@ namespace XrRacing.Editor.Characters
             serializedMover.ApplyModifiedPropertiesWithoutUndo();
         }
 
+        /// <summary>
+        /// Every character starts from the script defaults, which were tuned on the Karting driver's hands. Each
+        /// character has its own tuner, so adjusting one in Play mode doesn't affect the others.
+        /// </summary>
         private static void AddFingerSpreadTuner(GameObject character)
         {
             var tuner = character.AddComponent<FingerSpreadTuner>();
@@ -264,24 +449,12 @@ namespace XrRacing.Editor.Characters
             serializedDriver.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        private static void CreateMirror(GameObject model, Transform playerCharacter)
+        private static Transform CreateMirrorSpace()
         {
             // Reflecting across the plane z = MirrorDistance maps z to 2 * MirrorDistance - z.
             var mirrorSpace = new GameObject("MirrorSpace").transform;
             mirrorSpace.position = new Vector3(0f, 0f, 2f * MirrorDistance);
             mirrorSpace.localScale = new Vector3(1f, 1f, -1f);
-
-            var reflection = (GameObject)PrefabUtility.InstantiatePrefab(model, mirrorSpace);
-            reflection.name = "PlayerReflection";
-
-            var mirror = reflection.AddComponent<MirrorTransforms>();
-            var serializedMirror = new SerializedObject(mirror);
-            serializedMirror.FindProperty("_target").objectReferenceValue = playerCharacter;
-            serializedMirror.ApplyModifiedPropertiesWithoutUndo();
-            typeof(MirrorTransforms)
-                .GetMethod("FindBonePairs", BindingFlags.Instance | BindingFlags.NonPublic)
-                ?.Invoke(mirror, null);
-            EditorUtility.SetDirty(mirror);
 
             // Backdrop behind the reflection so the mirror reads as a framed surface rather than open space.
             var backdrop = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -289,6 +462,109 @@ namespace XrRacing.Editor.Characters
             backdrop.transform.position = new Vector3(0f, 1.25f, 2f * MirrorDistance + 1f);
             backdrop.transform.localScale = new Vector3(2.5f, 2.5f, 1f);
             UnityEngine.Object.DestroyImmediate(backdrop.GetComponent<Collider>());
+            return mirrorSpace;
+        }
+
+        private static GameObject CreateReflection(GameObject model, Transform playerBody, Transform mirrorSpace,
+            string name)
+        {
+            var reflection = (GameObject)PrefabUtility.InstantiatePrefab(model, mirrorSpace);
+            reflection.name = name;
+            FlattenArmatureRotation(FindBody(reflection));
+
+            var mirror = FindBody(reflection).AddComponent<MirrorTransforms>();
+            var serializedMirror = new SerializedObject(mirror);
+            serializedMirror.FindProperty("_target").objectReferenceValue = playerBody;
+            serializedMirror.ApplyModifiedPropertiesWithoutUndo();
+            typeof(MirrorTransforms)
+                .GetMethod("FindBonePairs", BindingFlags.Instance | BindingFlags.NonPublic)
+                ?.Invoke(mirror, null);
+            EditorUtility.SetDirty(mirror);
+            return reflection;
+        }
+
+        /// <summary>
+        /// One standing model in the lineup arc on the player's right, on a pedestal with its name above it, that a
+        /// controller ray can select. Returns the name label so the lineup can highlight the current choice.
+        /// </summary>
+        private static TMPro.TMP_Text CreateLineupOption(GameObject model, string label, int index,
+            CharacterLineup lineup)
+        {
+            var angle = (LineupFirstAngle + LineupAngleStep * index) * Mathf.Deg2Rad;
+            var position = new Vector3(Mathf.Sin(angle), 0f, Mathf.Cos(angle)) * LineupRadius;
+
+            var option = new GameObject("LineupOption_" + label).transform;
+            option.SetParent(lineup.transform, false);
+            option.SetPositionAndRotation(position, Quaternion.LookRotation(-position, Vector3.up));
+
+            var pedestal = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            pedestal.name = "Pedestal";
+            pedestal.transform.SetParent(option, false);
+            pedestal.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+            pedestal.transform.localScale = new Vector3(0.6f, 0.05f, 0.6f);
+            UnityEngine.Object.DestroyImmediate(pedestal.GetComponent<Collider>());
+
+            var display = (GameObject)PrefabUtility.InstantiatePrefab(model, option);
+            display.name = "Display";
+            display.transform.SetLocalPositionAndRotation(new Vector3(0f, 0.1f, 0f), Quaternion.identity);
+            PoseInTPose(display, model);
+
+            // The ray targets a box around the whole model.
+            var bounds = new Bounds(option.position + Vector3.up, Vector3.zero);
+            foreach (var renderer in display.GetComponentsInChildren<Renderer>())
+            {
+                bounds.Encapsulate(renderer.bounds);
+            }
+
+            var box = option.gameObject.AddComponent<BoxCollider>();
+            box.center = option.InverseTransformPoint(bounds.center);
+            box.size = new Vector3(Mathf.Max(bounds.size.x, 0.5f), bounds.size.y, Mathf.Max(bounds.size.z, 0.5f));
+
+            var surface = option.gameObject.AddComponent<Oculus.Interaction.Surfaces.ColliderSurface>();
+            var serializedSurface = new SerializedObject(surface);
+            serializedSurface.FindProperty("_collider").objectReferenceValue = box;
+            serializedSurface.ApplyModifiedPropertiesWithoutUndo();
+
+            var interactable = option.gameObject.AddComponent<Oculus.Interaction.RayInteractable>();
+            var serializedInteractable = new SerializedObject(interactable);
+            serializedInteractable.FindProperty("_surface").objectReferenceValue = surface;
+            serializedInteractable.ApplyModifiedPropertiesWithoutUndo();
+
+            var choice = option.gameObject.AddComponent<CharacterLineupOption>();
+            var serializedChoice = new SerializedObject(choice);
+            serializedChoice.FindProperty("_lineup").objectReferenceValue = lineup;
+            serializedChoice.FindProperty("_index").intValue = index;
+            serializedChoice.FindProperty("_interactable").objectReferenceValue = interactable;
+            serializedChoice.ApplyModifiedPropertiesWithoutUndo();
+
+            var text = new GameObject("Label").AddComponent<TMPro.TextMeshPro>();
+            text.transform.SetParent(option, false);
+            // TextMeshPro reads from its -Z side; the option's forward faces the player.
+            text.transform.SetLocalPositionAndRotation(new Vector3(0f, bounds.max.y + 0.15f, 0f),
+                Quaternion.Euler(0f, 180f, 0f));
+            text.text = label;
+            text.fontSize = 2f;
+            text.alignment = TMPro.TextAlignmentOptions.Center;
+            text.rectTransform.sizeDelta = new Vector2(1.5f, 0.4f);
+            return text;
+        }
+
+        private static void SetLineupChoices(CharacterLineup lineup, GameObject[] players, GameObject[] reflections,
+            TMPro.TMP_Text[] labels)
+        {
+            var serializedLineup = new SerializedObject(lineup);
+            var choices = serializedLineup.FindProperty("_choices");
+            choices.arraySize = players.Length;
+            for (var i = 0; i < players.Length; i++)
+            {
+                var choice = choices.GetArrayElementAtIndex(i);
+                choice.FindPropertyRelative("Player").objectReferenceValue = players[i];
+                choice.FindPropertyRelative("Reflection").objectReferenceValue = reflections[i];
+                choice.FindPropertyRelative("Label").objectReferenceValue = labels[i];
+            }
+
+            serializedLineup.FindProperty("_selected").intValue = 0;
+            serializedLineup.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static void Report(string message)
