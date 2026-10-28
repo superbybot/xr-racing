@@ -38,8 +38,11 @@ namespace XrRacing.Editor.Characters
         private const float LineupFirstAngle = 35f;
         private const float LineupAngleStep = 33f;
 
-        // The first entry is the default. Every character gets the FingerSpreadTuner defaults tuned on its hands;
-        // only its config (Player.json) also has finger spread baked into the T-pose.
+        private const float RacerIndexSpread = 1.7f;
+        private const float RacerIndexOffset = 2.96f;
+
+        // The first entry is the default. The driver keeps the FingerSpreadTuner defaults tuned on its hands (its
+        // config, Player.json, also has finger spread baked into the T-pose); the racers share values tuned on the cat.
         private static readonly (string Label, string AssetPath)[] Characters =
         {
             ("Driver", KartingPath + "Art/Models/Player.FBX"),
@@ -131,6 +134,29 @@ namespace XrRacing.Editor.Characters
         }
 
         /// <summary>
+        /// The cat racer prefab renames its armature node, which the model's humanoid avatar looks up by its FBX
+        /// name, so the Animator resolves no bones (and the finger spread tuner finds no fingers). Gives every
+        /// renamed object under the rigged body its FBX name back.
+        /// </summary>
+        private static void RestoreModelNames(GameObject body)
+        {
+            foreach (var part in body.GetComponentsInChildren<Transform>(true))
+            {
+                var source = PrefabUtility.GetCorrespondingObjectFromOriginalSource(part);
+                if (part != body.transform && source != null && source.name != part.name)
+                {
+                    part.name = source.name;
+                }
+            }
+
+            var animator = body.GetComponent<Animator>();
+            if (animator != null)
+            {
+                animator.Rebind();
+            }
+        }
+
+        /// <summary>
         /// The rigged model inside a character asset: the asset itself for a bare FBX, or the FBX instance that the
         /// racer prefabs nest under a plain root alongside their head and accessories.
         /// </summary>
@@ -152,13 +178,6 @@ namespace XrRacing.Editor.Characters
         {
             var animator = body.GetComponent<Animator>();
             var hips = animator != null ? animator.GetBoneTransform(HumanBodyBones.Hips) : null;
-            if (hips == null && animator != null && animator.avatar != null)
-            {
-                // The cat's Animator doesn't resolve its bones in edit mode, though its avatar maps them.
-                var hipsName = Array.Find(animator.avatar.humanDescription.human, bone => bone.humanName == "Hips")
-                    .boneName;
-                hips = Array.Find(body.GetComponentsInChildren<Transform>(true), bone => bone.name == hipsName);
-            }
 
             var rootBone = hips != null ? hips.parent : null;
             var armature = rootBone != null ? rootBone.parent : null;
@@ -324,6 +343,7 @@ namespace XrRacing.Editor.Characters
             instance.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
             var character = FindBody(instance);
 
+            RestoreModelNames(character);
             FlattenArmatureRotation(character);
 
             try
@@ -343,7 +363,7 @@ namespace XrRacing.Editor.Characters
             }
 
             KeepCharacterProportions(retargeter);
-            AddFingerSpreadTuner(character);
+            AddFingerSpreadTuner(character, character != instance);
             AddJoystickWalking(character, rig);
             AddSimulatorDriver(character, rig, retargeter);
             return character;
@@ -396,14 +416,21 @@ namespace XrRacing.Editor.Characters
         }
 
         /// <summary>
-        /// Every character starts from the script defaults, which were tuned on the Karting driver's hands. Each
-        /// character has its own tuner, so adjusting one in Play mode doesn't affect the others.
+        /// The driver starts from the script defaults, which were tuned on its hands; the racers (whose rigged body
+        /// is a child of the prefab root) start from the values tuned on the cat. Each character has its own tuner,
+        /// so adjusting one in Play mode doesn't affect the others.
         /// </summary>
-        private static void AddFingerSpreadTuner(GameObject character)
+        private static void AddFingerSpreadTuner(GameObject character, bool isRacer)
         {
             var tuner = character.AddComponent<FingerSpreadTuner>();
             var serializedTuner = new SerializedObject(tuner);
             serializedTuner.FindProperty("_animator").objectReferenceValue = character.GetComponent<Animator>();
+            if (isRacer)
+            {
+                serializedTuner.FindProperty("_index").floatValue = RacerIndexSpread;
+                serializedTuner.FindProperty("_indexOffset").floatValue = RacerIndexOffset;
+            }
+
             serializedTuner.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -470,6 +497,7 @@ namespace XrRacing.Editor.Characters
         {
             var reflection = (GameObject)PrefabUtility.InstantiatePrefab(model, mirrorSpace);
             reflection.name = name;
+            RestoreModelNames(FindBody(reflection));
             FlattenArmatureRotation(FindBody(reflection));
 
             var mirror = FindBody(reflection).AddComponent<MirrorTransforms>();
@@ -507,6 +535,7 @@ namespace XrRacing.Editor.Characters
             var display = (GameObject)PrefabUtility.InstantiatePrefab(model, option);
             display.name = "Display";
             display.transform.SetLocalPositionAndRotation(new Vector3(0f, 0.1f, 0f), Quaternion.identity);
+            RestoreModelNames(FindBody(display));
             PoseInTPose(display, model);
 
             // The ray targets a box around the whole model.
