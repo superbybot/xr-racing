@@ -3,6 +3,7 @@
     "rootNamespace": "XrRacing.Editor",
     "references": [
         "XrRacing.Gameplay",
+        "XrRacing.References.KartGame",
         "Oculus.Interaction",
         "Unity.TextMeshPro",
         "Unity.RenderPipelines.Universal.Runtime",

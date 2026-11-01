@@ -80,7 +80,6 @@ namespace XrRacing.Gameplay.UI
                 return;
             }
 
-            // Find Playground track
             for (int i = 0; i < trackLoader.Tracks.Count; i++)
             {
                 if (trackLoader.Tracks[i].displayName.IndexOf("Playground", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -90,7 +89,6 @@ namespace XrRacing.Gameplay.UI
                 }
             }
 
-            // Fallback to first track if named differently
             trackLoader.RequestTrack(0);
         }
 

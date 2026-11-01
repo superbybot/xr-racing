@@ -1,0 +1,16 @@
+{
+    "name": "XrRacing.References.KartGame",
+    "rootNamespace": "XrRacing.References.KartGame",
+    "references": [
+        "Unity.ML-Agents"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

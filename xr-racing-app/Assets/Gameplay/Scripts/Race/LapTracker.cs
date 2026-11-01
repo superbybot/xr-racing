@@ -99,7 +99,6 @@ namespace XrRacing.Gameplay.Race
                 return;
             }
 
-            // Intermediate checkpoint
             if (index > _lastCheckpointIndex || (_lastCheckpointIndex >= count - 2 && index < 3))
             {
                 _lastCheckpointIndex = index;

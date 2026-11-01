@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using KartGame.KartSystems;
+using XrRacing.References.KartGame.KartSystems;
 using UnityEngine;
 using XrRacing.Gameplay.Tracks;
 using XrRacing.Gameplay.UI;
@@ -178,7 +178,7 @@ namespace XrRacing.Gameplay.Race
             if (kart != null)
             {
                 kart.SetCanMove(false);
-                Rigidbody body = kart.GetComponent<Rigidbody>();
+                Rigidbody body = kart.Rigidbody;
                 if (body != null && !body.isKinematic)
                 {
                     body.linearVelocity = Vector3.zero;
@@ -279,10 +279,9 @@ namespace XrRacing.Gameplay.Race
 
         private async UniTaskVoid HandlePostRaceAsync()
         {
-            // Decelerate kart smoothly
             if (kart != null)
             {
-                Rigidbody body = kart.GetComponent<Rigidbody>();
+                Rigidbody body = kart.Rigidbody;
                 if (body != null)
                 {
                     float elapsed = 0f;

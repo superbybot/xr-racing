@@ -1,7 +1,6 @@
 using System;
 using TMPro;
 using UnityEngine;
-using XrRacing.Gameplay.UI;
 using XrRacing.Gameplay.Vehicle;
 
 namespace XrRacing.Gameplay.UI
@@ -21,9 +20,9 @@ namespace XrRacing.Gameplay.UI
         [Tooltip("Color of normal lap text.")]
         [SerializeField] private Color normalColor = Color.white;
         [Tooltip("Color of the FINAL LAP text.")]
-        [SerializeField] private Color finalLapColor = new Color(1f, 0.75f, 0f, 1f); // Gold / amber accent
+        [SerializeField] private Color finalLapColor = new Color(1f, 0.75f, 0f, 1f);
         [Tooltip("Color of the GOAAAAL text.")]
-        [SerializeField] private Color goalColor = new Color(0.1f, 0.9f, 0.3f, 1f); // Green accent
+        [SerializeField] private Color goalColor = new Color(0.1f, 0.9f, 0.3f, 1f);
         [Tooltip("Seat whose head the card turns to face. Falls back to the main camera.")]
         [SerializeField] private DriverSeatAdjuster seat;
 

@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using XrRacing.Gameplay.UI;
 
 namespace XrRacing.Gameplay.UI
 {
@@ -41,15 +40,6 @@ namespace XrRacing.Gameplay.UI
 
         private void Awake()
         {
-            if (canvasGroup == null && panel != null)
-            {
-                canvasGroup = panel.GetComponent<CanvasGroup>();
-                if (canvasGroup == null)
-                {
-                    canvasGroup = panel.AddComponent<CanvasGroup>();
-                }
-            }
-
             if (panel != null)
             {
                 OverlayLayer.Apply(panel);
@@ -99,7 +89,6 @@ namespace XrRacing.Gameplay.UI
 
             panel.SetActive(true);
 
-            // 3, 2, 1
             for (int i = 3; i >= 1; i--)
             {
                 countdownText.text = i.ToString();
@@ -109,17 +98,14 @@ namespace XrRacing.Gameplay.UI
                 await UniTask.Delay(TimeSpan.FromSeconds(countDuration), cancellationToken: token);
             }
 
-            // START!
             countdownText.text = "START!";
             countdownText.color = startColor;
             PlaySound(startClip);
 
-            // Signal game logic to unlock kart acceleration immediately
             onStartAction?.Invoke();
 
             await UniTask.Delay(TimeSpan.FromSeconds(startDuration), cancellationToken: token);
 
-            // Smooth fade out
             if (canvasGroup != null)
             {
                 float elapsed = 0f;

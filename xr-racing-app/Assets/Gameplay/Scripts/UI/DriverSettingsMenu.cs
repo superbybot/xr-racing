@@ -5,6 +5,7 @@ using Oculus.Interaction.Surfaces;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using XrRacing.Gameplay.Diagnostics;
 using XrRacing.Gameplay.Settings;
 using XrRacing.Gameplay.Tracks;
 using XrRacing.Gameplay.Vehicle;
@@ -114,8 +115,8 @@ namespace XrRacing.Gameplay.UI
         [Tooltip("Depth (meters) of the panel's ray/poke hit area around its surface. Must stay above float precision " +
             "at the track's distance from the world origin, or rays randomly miss the panel.")]
         [SerializeField, Min(0.0001f)] private float pointerSurfaceDepth = 0.002f;
-        [Tooltip("Temporary: log the pointer rays to Logs/menu_ray.csv while the menu is open (dev builds only).")]
-        [SerializeField] private bool debugRayLog = true;
+        [Tooltip("Optional: a MenuRayDebugLog that logs the pointer rays to Logs/menu_ray.csv while the menu is open (Editor and dev builds). Leave empty normally.")]
+        [SerializeField] private MenuRayDebugLog rayDebugLog;
 
         private DriverSettings _settings;
         private bool _following;
@@ -150,9 +151,9 @@ namespace XrRacing.Gameplay.UI
             panel.SetActive(false);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (debugRayLog)
+            if (rayDebugLog != null)
             {
-                gameObject.AddComponent<MenuRayDebugLog>().Init(panel, seat != null ? seat.transform : null, GetHead());
+                rayDebugLog.Init(panel, seat != null ? seat.transform : null, GetHead());
             }
 #endif
         }

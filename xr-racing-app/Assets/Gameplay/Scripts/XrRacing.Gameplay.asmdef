@@ -11,7 +11,7 @@
         "Unity.XR.Interaction.Toolkit",
         "UniTask",
         "Fusion.Unity",
-        "Unity.ML-Agents",
+        "XrRacing.References.KartGame",
         "Meta.XR.Movement"
     ],
     "includePlatforms": [],

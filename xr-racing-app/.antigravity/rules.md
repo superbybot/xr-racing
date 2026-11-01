@@ -15,7 +15,8 @@ All project rules — reference project, CI/CD & agent guardrails, and the aider
 Ported reference assets from `xr-sandbox` live in:
 - `Assets/References/Karting Reference/`: Unity Karting Microgame reference assets.
 - `Assets/References/Input Reference/`: XR cockpit rig reference.
-Treat these folders as reference/source, not for direct modification. Project-specific gameplay assets and scripts live under `Assets/Gameplay/`.
+- `Assets/References/KartGame/`: scripts adopted from the Karting Microgame (own assembly, namespace `XrRacing.References.KartGame`).
+Treat these folders as reference/source, not for direct modification. Project-specific gameplay assets and scripts live under `Assets/Gameplay/`. Repo layout (`tools/`, `_temp/`, `docs/`), code standards and the PR review loop are in the root `CLAUDE.md`.
 
 ## Aider Delegation & Windows Specifics
 

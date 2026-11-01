@@ -6,7 +6,7 @@ VR kart racing for Meta Quest, built with Unity 6.
 
 - **Engine:** Unity 6000.5.2f1, Universal Render Pipeline (URP) 17.5.0
 - **Target Platform:** Meta Quest standalone (Android/ARM64)
-- **XR SDKs:** Meta XR SDK 205.0.0 (Core, Interaction, Interaction.OVR, Movement), Unity XR Interaction Toolkit 3.4.1, OpenXR 1.17.1
+- **XR SDKs:** Meta XR SDK 207.0.0 (Core, Interaction, Interaction.OVR, Movement), Unity XR Interaction Toolkit 3.4.1, OpenXR 1.17.1
 - **Multiplayer:** Photon Fusion 2 (resolved under `Assets/Photon/Fusion`)
 - **Auxiliary Packages:** UniTask, NuGetForUnity, TextMeshPro, Cinemachine, ProBuilder, Unity Input System
 
@@ -21,5 +21,16 @@ VR kart racing for Meta Quest, built with Unity 6.
 - **Reference Assets (`Assets/References/`):**
   - `Assets/References/Karting Reference/`: Ported from Unity's Karting Microgame (models, audio, tracks, and physics components).
   - `Assets/References/Input Reference/`: Grabbable cockpit rig and steering wheel meshes.
+  - `Assets/References/KartGame/`: Scripts adopted from the Karting Microgame (`ArcadeKart`, kart animation/audio, ML-Agents `KartAgent`), in their own assembly and the `XrRacing.References.KartGame` namespace.
 - **CI/CD Automation (`.github/workflows/`):**
   - Automated headless batch builds and ADB deployment to Meta Quest via self-hosted GitHub Actions runner (`build-and-deploy.yml`).
+
+## Repository Layout
+
+| Path | What's there |
+|---|---|
+| `xr-racing-app/` | The Unity project. Our code: `Assets/Gameplay/Scripts/<Domain>/` (debug loggers in `Diagnostics/`), Editor tools in `Assets/Editor/Build/` and `Assets/Editor/Builders/`. |
+| `docs/` | Project docs: PR review rules (`docs/review-rules/`), code audit, PR review setup, autonomous testing, multiplayer architecture. |
+| `tools/` | Reusable scripts, e.g. `tools/autotest/` for driving and inspecting the game from the Unity CLI and Meta XR Operator. |
+| `_temp/` | Local scratch output (screenshots in `_temp/captures/`, videos in `_temp/videos/`). Gitignored, never committed. |
+| `.github/workflows/` | Quest build/deploy on the self-hosted runner, and the Claude PR review (`pr-review.yml`). |

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using KartGame.KartSystems;
+using XrRacing.References.KartGame.KartSystems;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using XrRacing.Gameplay.Vehicle;
@@ -114,7 +114,7 @@ namespace XrRacing.Gameplay.Tracks
             }
 
             IsLoading = true;
-            Rigidbody body = kart.GetComponent<Rigidbody>();
+            Rigidbody body = kart.Rigidbody;
             bool wasKinematic = body.isKinematic;
             bool wasKartEnabled = kart.enabled;
 
@@ -184,7 +184,7 @@ namespace XrRacing.Gameplay.Tracks
             }
 
             IsLoading = true;
-            Rigidbody body = kart.GetComponent<Rigidbody>();
+            Rigidbody body = kart.Rigidbody;
             bool wasKinematic = body.isKinematic;
             bool wasKartEnabled = kart.enabled;
 

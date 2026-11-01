@@ -22976,10 +22976,10 @@ MonoBehaviour:
   triggerDeadzone: 0.05
   indexCurlRange: {x: 200, y: 240}
   thumbCurlRange: {x: 190, y: 210}
-  wheelGrabbable: {fileID: 0}
+  wheelGrabbable: {fileID: 4539474454409822586}
   returnSpeed: 360
   trackLoader: {fileID: 0}
-  debugLog: 1
+  debugLog: 0
   grabDebugRadius: 0.6
 --- !u!114 &6154708090128545671
 MonoBehaviour:
@@ -22988,7 +22988,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6414228595842160886}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 09df507fd1fe4a69b1c55fc28765d88c, type: 3}
   m_Name: 
