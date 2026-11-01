@@ -22976,7 +22976,7 @@ MonoBehaviour:
   triggerDeadzone: 0.05
   indexCurlRange: {x: 200, y: 240}
   thumbCurlRange: {x: 190, y: 210}
-  wheelGrabbable: {fileID: 0}
+  wheelGrabbable: {fileID: 4539474454409822586}
   returnSpeed: 360
   trackLoader: {fileID: 0}
   debugLog: 0

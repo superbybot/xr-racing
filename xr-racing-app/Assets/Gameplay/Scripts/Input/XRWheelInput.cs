@@ -30,7 +30,7 @@ namespace XrRacing.Gameplay.Input
         [SerializeField] private Vector2 indexCurlRange = new Vector2(200f, 240f);
         [Tooltip("Hand tracking: thumb curl in degrees mapped to its pedal, x = released, y = fully pressed.")]
         [SerializeField] private Vector2 thumbCurlRange = new Vector2(190f, 210f);
-        [Tooltip("Grabbable on the wheel; used to detect release. Defaults to the one on Wheel Transform.")]
+        [Tooltip("Grabbable on the wheel; used to detect release.")]
         [SerializeField] private Grabbable wheelGrabbable;
         [Tooltip("Degrees per second the wheel turns back to center after it is released. 0 disables.")]
         [SerializeField] private float returnSpeed = 360f;
@@ -70,11 +70,6 @@ namespace XrRacing.Gameplay.Input
             if (wheelTransform != null)
             {
                 _originRotation = wheelTransform.localRotation;
-
-                if (wheelGrabbable == null)
-                {
-                    wheelGrabbable = wheelTransform.GetComponent<Grabbable>();
-                }
             }
         }
 

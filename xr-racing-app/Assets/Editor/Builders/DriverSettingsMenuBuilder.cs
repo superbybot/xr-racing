@@ -56,7 +56,7 @@ namespace XrRacing.Editor.Builders
 
         /// <summary>
         /// Batch-mode entry: opens the VR driving scene, builds the menu and saves the scene. Exits with 1 on failure.
-        /// Unity -batchmode -quit -projectPath &lt;project&gt; -executeMethod DriverSettingsMenuBuilder.BuildInDrivingScene
+        /// Unity -batchmode -quit -projectPath &lt;project&gt; -executeMethod XrRacing.Editor.Builders.DriverSettingsMenuBuilder.BuildInDrivingScene
         /// </summary>
         public static void BuildInDrivingScene()
         {
