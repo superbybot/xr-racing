@@ -34,7 +34,7 @@ Use 'Verdict: APPROVED' with no list when nothing needs changing."
 echo "Reviewing PR #$pr locally (this takes a few minutes)..." >&2
 claude -p "$prompt" \
   --allowedTools "Read,Grep,Glob,Bash(gh pr diff:*),Bash(gh pr view:*)" \
-  --output-format text > "$out"
+  --output-format text < /dev/null > "$out"
 echo "Saved $out" >&2
 
 if [ "${2:-}" = "--post" ]; then
