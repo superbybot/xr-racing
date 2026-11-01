@@ -1,13 +1,15 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using XrRacing.Gameplay.Race;
+using XrRacing.References.KartGame.KartSystems;
 
 namespace XrRacing.Gameplay.Input
 {
-    public class KartKeyboardInput : KartGame.KartSystems.BaseInput
+    public class KartKeyboardInput : BaseInput
     {
-        public override KartGame.KartSystems.InputData GenerateInput()
+        public override InputData GenerateInput()
         {
-            if (Keyboard.current == null || XrRacing.Gameplay.Race.RaceManager.IsControlsLocked)
+            if (Keyboard.current == null || RaceManager.IsControlsLocked)
             {
                 return default;
             }
@@ -26,7 +28,7 @@ namespace XrRacing.Gameplay.Input
             bool accelerate = Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed;
             bool brake = Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed;
 
-            return new KartGame.KartSystems.InputData
+            return new InputData
             {
                 Accelerate = accelerate ? 1f : 0f,
                 Brake = brake ? 1f : 0f,

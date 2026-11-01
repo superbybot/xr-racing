@@ -2,7 +2,8 @@
 
 How an AI agent tests xr-racing in the running Editor without a headset. Learned
 in the first end-to-end run (2026-10-12, Track_Playground). Scripts live in
-`tools/autotest/`; output goes to `test-captures/` (gitignored).
+`tools/autotest/` (see the index below); screenshots go to `_temp/captures/`, videos to
+`_temp/videos/` (both gitignored).
 
 ## The stack — use the right layer
 
@@ -24,19 +25,20 @@ in the first end-to-end run (2026-10-12, Track_Playground). Scripts live in
 3. **External control loops are slow** (~1 s per Unity CLI call, ~0.3–0.6 s per
    Operator step). Fine for steering toward waypoints; too slow for anything
    frame-timed. Frame-accurate input sequences must run inside the game.
-4. **Know the map before driving.** Query the scene layout (`tools/autotest/map_info.cs`)
+4. **Know the map before driving.** Query the scene layout (`tools/autotest/probes/track_layout.cs`)
    and keep waypoints well inside the playable area — the boundary hill and
    TrackTest fences trap the kart. Playground has no checkpoints; `LapTracker`
    is inactive there.
 5. **Verify with data and pictures.** Log kart pose/speed/input alongside each
-   screenshot (`why_still.cs` reports pause/lock/menu/loading/input/grab state).
+   screenshot (`probes/kart_drive_state.cs` reports pause/lock/menu/loading/input/grab state).
    Identical screenshots or unchanged poses mean the test is broken — stop and diagnose.
 6. **Calibrate steering at speed, or use the known mapping:** wheel −40° (about
-   the spin axis, see `wheel_path.cs`) → `TurnInput` ≈ +0.44 = right turn.
-7. **Save screenshots to `test-captures/<date>_<scene>/`**, never under `Assets/`
+   the spin axis, see `probes/wheel_rim_points.cs`) → `TurnInput` ≈ +0.44 = right turn.
+7. **Save screenshots to `_temp/captures/<date>_<scene>/`** and videos to `_temp/videos/`,
+   never inside `xr-racing-app/`
    (that creates `.meta` files). Use `capture_game_view` inline base64, or
    Operator's `openxr_capture_composited_image` for what the headset sees.
-8. **Clean up:** release controller inputs (`op_release.py`), exit Play mode,
+8. **Clean up:** release controller inputs (`operator/release_controllers.py`), exit Play mode,
    and report anything you changed outside the repo.
 9. **Report honestly:** what drove the kart (hands vs keyboard), waypoints reached,
    where it got stuck and why, and which failures were the test's fault vs the game's.
@@ -52,7 +54,7 @@ in the first end-to-end run (2026-10-12, Track_Playground). Scripts live in
 - `delete_asset <path> --confirm true`; list params with `unity command --query <name> --detail full --format json`.
 
 **Meta XR Operator / Simulator**
-- Not registered as an MCP server here; use `tools/autotest/op.py` with the proxy
+- Not registered as an MCP server here; use `tools/autotest/operator/operator_client.py` with the proxy
   exe and base URL `http://127.0.0.1:8720` (not `/sse`, not `localhost`).
 - The live tool set (Core SDK 207) has **no hand-tracking tools** — finger-curl
   pedals can't be tested yet; use controllers.
@@ -80,13 +82,41 @@ R=$(pwd -W); U="$LOCALAPPDATA/Unity/bin/unity.exe"; T="$R/tools/autotest"
 P="$R/$(ls -d xr-racing-app/Library/PackageCache/com.meta.xr.sdk.core@*/Editor/MetaXROperator/Tools~/Windows/meta-xr-operator-mcp-proxy.exe | tail -1)"
 "$U" command editor_focus; "$U" command editor_play; sleep 10
 for i in 1 2 3 4 5; do "$U" command editor_focus && break; sleep 3; done   # Editor is busy right after entering Play
-export RIM=$("$U" command eval_file --file "$T/wheel_path.cs" --result-only | python -I -c "import json,sys; print(json.load(sys.stdin)['result'])")
+export RIM=$("$U" command eval_file --file "$T/probes/wheel_rim_points.cs" --result-only | python -I -c "import json,sys; print(json.load(sys.stdin)['result'])")
 # Quick check: timed free drive, screenshot every SHOT seconds (no waypoints)
-OUT=$(date +%F)_drive DRIVE=30 SHOT=5 PYTHONIOENCODING=utf-8 python -I -X utf8 "$T/op.py" "$P" "$T/op_drive_timed.py"
-# Or the waypoint tour: OUT=... MAXT=180 ... "$T/op_drive.py"
-python -I -X utf8 "$T/op.py" "$P" "$T/op_release.py"; "$U" command editor_stop
+OUT=$(date +%F)_drive DRIVE=30 SHOT=5 PYTHONIOENCODING=utf-8 python -I -X utf8 "$T/operator/operator_client.py" "$P" "$T/operator/drive_timed_circle.py"
+# Or the waypoint tour: OUT=... MAXT=180 ... "$T/operator/drive_waypoints.py"
+python -I -X utf8 "$T/operator/operator_client.py" "$P" "$T/operator/release_controllers.py"; "$U" command editor_stop
 ```
 
-`op_drive_timed.py` holds a steady right-hand circle after 6 s. Its lap is about
+`drive_timed_circle.py` holds a steady right-hand circle after 6 s. Its lap is about
 5 s, so positions sampled every 5 s can look stuck while the kart is moving. Check
-`speed` in `why_still.cs` before calling it a stall.
+`speed` in `kart_drive_state.cs` before calling it a stall.
+
+## Script index (`tools/autotest/`)
+
+Run the `.cs` files with `unity command eval_file --file <absolute path>`; the
+`operator/` scripts with `python -I -X utf8 operator/operator_client.py <proxy.exe> <script>`.
+
+| Script | What it does |
+|---|---|
+| `operator/operator_client.py` | Minimal MCP client for the Meta XR Operator proxy; runs a script with `call()`, `save_images()`, `sleep()`, `log()`. Saves to `_temp/captures/<OUT>/`. |
+| `operator/drive_timed_circle.py` | Grabs the wheel with both controllers and drives straight, then a steady right circle; headset screenshot every `SHOT` s. |
+| `operator/drive_waypoints.py` | Waypoint tour of Track_Playground with the controllers on the wheel. |
+| `operator/release_controllers.py` | Releases every injected controller input. Run after each drive. |
+| `probes/kart_pose.cs` | Kart position, yaw, speed, time as one CSV line. |
+| `probes/kart_drive_state.cs` | Why the kart isn't moving: pause, control lock, menu, loading, wheel/kart input, grab, speed. |
+| `probes/wheel_rim_points.cs` | Rim grab points in OpenXR coordinates (the `RIM` env var for the drive scripts). |
+| `probes/wheel_grab_state.cs` | Every HandGrabInteractor near the wheel and why it does or doesn't grab. |
+| `probes/controller_state.cs` | Controller connection, pose, grip/trigger, and which controller visuals render. |
+| `probes/controller_visuals.cs` | Why controller models aren't drawn (OVRControllerHelper / ControllerVisual state). |
+| `probes/hand_tracking_state.cs` | Hand tracking state per hand (tracked, confidence, pinch). |
+| `probes/track_layout.cs` | Track_Playground root objects with bounds, for planning waypoints. |
+| `probes/cameras.cs` | All cameras with tag, enabled state and pose. |
+| `probes/character_bones.cs` | Bone names under `PlayerCharacter`. |
+| `setup/activate_xr_simulator.cs` | Turns on the Meta XR Simulator (same as its menu item). |
+| `setup/rig_reset.cs` | Puts `OVRCameraRig` back at the origin. |
+| `setup/spectator_camera.cs` | Adds a side-on spectator camera for Game View captures (CharacterTest). |
+| `setup/character_front_view.cs`, `character_side_view.cs`, `character_mirror_view.cs` | Stage the rig/mirror for CharacterTest screenshots. |
+| `setup/refresh_assets.cs` | `AssetDatabase.Refresh()`. |
+| `recording/start_recording.cs`, `stop_recording.cs` | Unity Recorder MP4 of the Game View into `_temp/videos/progress_<time>.mp4`. |

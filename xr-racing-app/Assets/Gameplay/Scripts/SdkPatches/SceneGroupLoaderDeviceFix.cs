@@ -123,6 +123,11 @@ namespace XrRacing.Gameplay.SdkPatches
 
     internal class SceneGroupLoaderDeviceFixRunner : MonoBehaviour
     {
+        private const float FixWindowSeconds = 5f;
+        private const float FixIntervalSeconds = 0.5f;
+        private readonly HashSet<string> _buildSceneNames = new HashSet<string>();
+        private Coroutine _fixLoop;
+
         private static readonly System.Type TileViewType =
             typeof(SceneGroupLoader).GetNestedType("SceneTileView", BindingFlags.NonPublic);
         private static readonly FieldInfo ImageField = TileViewType?.GetField("Image");
@@ -136,39 +141,60 @@ namespace XrRacing.Gameplay.SdkPatches
                 Debug.LogWarning($"[SceneGroupLoaderDeviceFix] Workaround was verified for Meta XR SDK 69 / OVRPlugin 1.107. Current version is {ovrVersion}. Verify if this SDK patch is still needed.");
             }
 
-            StartCoroutine(FixLoop());
+            for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
+            {
+                _buildSceneNames.Add(Path.GetFileNameWithoutExtension(SceneUtility.GetScenePathByBuildIndex(i)));
+            }
+
+            RestartFixLoop();
         }
 
+        private void OnEnable()
+        {
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private void OnDisable()
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            RestartFixLoop();
+        }
+
+        private void RestartFixLoop()
+        {
+            if (_fixLoop != null)
+            {
+                StopCoroutine(_fixLoop);
+            }
+
+            _fixLoop = StartCoroutine(FixLoop());
+        }
+
+        // SceneGroupLoader builds its tiles in Start, so retry for a few seconds after each scene load, then stop.
         private IEnumerator FixLoop()
         {
-            var wait = new WaitForSeconds(0.5f);
-            while (true)
+            var wait = new WaitForSeconds(FixIntervalSeconds);
+            for (float elapsed = 0f; elapsed < FixWindowSeconds; elapsed += FixIntervalSeconds)
             {
                 Fix();
                 yield return wait;
             }
+
+            _fixLoop = null;
         }
 
         private void Fix()
         {
-            var buildSceneNames = new HashSet<string>();
-            for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
-            {
-                string path = SceneUtility.GetScenePathByBuildIndex(i);
-                buildSceneNames.Add(Path.GetFileNameWithoutExtension(path));
-            }
-
             var loaders = Object.FindObjectsByType<SceneGroupLoader>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-            int toggleCount = 0;
-            int fixedCount = 0;
-            int imageFixedCount = 0;
 
             foreach (var loader in loaders)
             {
                 foreach (var toggle in loader.GetComponentsInChildren<Toggle>(true))
                 {
-                    toggleCount++;
-
                     if (toggle.enabled)
                     {
                         continue;
@@ -179,13 +205,12 @@ namespace XrRacing.Gameplay.SdkPatches
                         continue;
                     }
 
-                    if (!buildSceneNames.Contains(sceneName))
+                    if (!_buildSceneNames.Contains(sceneName))
                     {
                         continue;
                     }
 
                     toggle.enabled = true;
-                    fixedCount++;
 
                     if (TileViewType == null)
                     {
@@ -201,7 +226,6 @@ namespace XrRacing.Gameplay.SdkPatches
                     if (ImageField?.GetValue(tileView) is Image image)
                     {
                         image.enabled = true;
-                        imageFixedCount++;
                     }
 
                     if (SceneMissingOverlayField?.GetValue(tileView) is Image overlay)
@@ -210,7 +234,6 @@ namespace XrRacing.Gameplay.SdkPatches
                     }
                 }
             }
-
         }
     }
 }

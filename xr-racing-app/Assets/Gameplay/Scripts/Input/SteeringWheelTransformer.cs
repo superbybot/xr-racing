@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Oculus.Interaction;
 using UnityEngine;
+using XrRacing.Gameplay.Diagnostics;
 
 namespace XrRacing.Gameplay.Input
 {

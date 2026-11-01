@@ -121,5 +121,8 @@ xr-racing-app/Assets/_Recovery.meta
 .aider*
 .claude/settings.local.json
 
-# Autonomous test output (screenshots, logs)
-/test-captures/
+# Local-only scratch output: test captures, videos, logs (never committed)
+/_temp/
+
+# Claude Code git worktrees (separate checkouts)
+.claude/worktrees/

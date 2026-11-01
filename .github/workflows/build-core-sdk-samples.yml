@@ -22,7 +22,7 @@ jobs:
       - name: Build and deploy via Unity batch mode
         shell: cmd
         run: |
-          "C:\Program Files\Unity\Hub\Editor\6000.5.2f1\Editor\Unity.exe" -batchmode -quit -nographics -stackTraceLogType Full -projectPath "C:\Users\super\OneDrive\Documents\GitHub\xr-racing-builder\xr-racing-app" -executeMethod QuestBuildDeploy.BuildAndDeployCoreSdkSamples -logFile "C:\Users\super\OneDrive\Documents\GitHub\xr-racing-builder\xr-racing-app\Logs\ci-build-core-sdk-samples.log"
+          "C:\Program Files\Unity\Hub\Editor\6000.5.2f1\Editor\Unity.exe" -batchmode -quit -nographics -stackTraceLogType Full -projectPath "C:\Users\super\OneDrive\Documents\GitHub\xr-racing-builder\xr-racing-app" -executeMethod XrRacing.Editor.Build.QuestBuildDeploy.BuildAndDeployCoreSdkSamples -logFile "C:\Users\super\OneDrive\Documents\GitHub\xr-racing-builder\xr-racing-app\Logs\ci-build-core-sdk-samples.log"
 
       - name: Show build log
         shell: cmd
