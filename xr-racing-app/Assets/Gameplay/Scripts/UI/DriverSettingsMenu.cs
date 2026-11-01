@@ -5,10 +5,10 @@ using Oculus.Interaction.Surfaces;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using XrRacing.Gameplay.Diagnostics;
 using XrRacing.Gameplay.Settings;
 using XrRacing.Gameplay.Tracks;
 using XrRacing.Gameplay.Vehicle;
-using XrRacing.Gameplay.Diagnostics;
 
 namespace XrRacing.Gameplay.UI
 {

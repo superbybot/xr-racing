@@ -20,7 +20,7 @@ and **diagnostics mixed into gameplay classes**.
 | Diagnostics | Three copies of the same CSV file-writing code; wheel log behind its own `XR_WHEEL_DEBUG` define (so its flag did nothing) | Shared `DiagnosticCsvWriter`; all three behind `UNITY_EDITOR \|\| DEVELOPMENT_BUILD` |
 | Performance | `KartMotionDebugLog` shipped **enabled** on `PlayerKart_VR` with raw samples (a CSV row and string building every physics step in the Editor and dev builds); `XRWheelInput.debugLog` on | Both off in the prefab |
 | Quick fix | `DriverSettingsMenu` did `AddComponent<MenuRayDebugLog>()`, on by default | Optional `[SerializeField] MenuRayDebugLog` reference |
-| Quick fix | `RaceCountdownUI` fell back to `GetComponent`/`AddComponent<CanvasGroup>()` | Removed; `RaceUIBuilder` already wires the field |
+| Quick fix | `RaceCountdownUI` fell back to `GetComponent`/`AddComponent<CanvasGroup>()` | Removed; `RaceUIBuilder` now adds the CanvasGroup at build time and `DrivingPrototype_VR` has it wired |
 | Quick fix | `PhysicsRateMatcher` spawned a GameObject + component at startup; its serialized range could never be edited | Static class hooked up at startup, no component |
 | Performance | `SceneGroupLoaderDeviceFix` polled every 0.5 s for the whole session in every scene (HashSet + `FindObjectsByType` each time) | Build scene names cached once; retries only for 5 s after each scene load |
 | Performance | `FingerSpreadTuner` allocated four arrays every `LateUpdate` | Reused buffers; summary corrected (it's the permanent finger fix, not a temporary tuner) |

@@ -11,7 +11,7 @@ using XrRacing.Gameplay.Tracks;
 using XrRacing.Gameplay.UI;
 using XrRacing.Gameplay.Vehicle;
 
-namespace XrRacing.Editor.UI
+namespace XrRacing.Editor.Builders
 {
     /// <summary>
     /// Builds the driver settings menu (track, reset kart, seat height/distance, recenter, pedal mapping,

@@ -12,7 +12,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using XrRacing.Gameplay.Characters;
 
-namespace XrRacing.Editor.Characters
+namespace XrRacing.Editor.Builders
 {
     /// <summary>
     /// Builds a standalone scene for testing the player's 3D character: an OVRCameraRig with Interaction SDK

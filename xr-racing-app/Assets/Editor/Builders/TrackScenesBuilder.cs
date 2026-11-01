@@ -14,7 +14,7 @@ using XrRacing.Gameplay.Tracks;
 using XrRacing.Gameplay.UI;
 using XrRacing.Gameplay.Vehicle;
 
-namespace XrRacing.Editor.Tracks
+namespace XrRacing.Editor.Builders
 {
     /// <summary>
     /// Splits the tracks out of the driving scene into their own scenes, loaded additively by TrackLoader:

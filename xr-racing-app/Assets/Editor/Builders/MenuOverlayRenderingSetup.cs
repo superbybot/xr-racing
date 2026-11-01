@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using XrRacing.Gameplay.UI;
 
-namespace XrRacing.Editor.UI
+namespace XrRacing.Editor.Builders
 {
     /// <summary>
     /// Makes the driver menu draw on top of the kart and track: adds the MenuOverlay layer, leaves it out of every

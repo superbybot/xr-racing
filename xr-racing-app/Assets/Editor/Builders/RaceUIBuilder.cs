@@ -12,7 +12,7 @@ using XrRacing.Gameplay.Tracks;
 using XrRacing.Gameplay.UI;
 using XrRacing.Gameplay.Vehicle;
 
-namespace XrRacing.Editor.Race
+namespace XrRacing.Editor.Builders
 {
     /// <summary>
     /// Builds the racing system (RaceManager, LapTracker, RaceCountdownUI, FloatingLapUI, RaceEndingMenu)
@@ -205,7 +205,13 @@ namespace XrRacing.Editor.Race
             var serialized = new SerializedObject(countdown);
             serialized.FindProperty("panel").objectReferenceValue = panel;
             serialized.FindProperty("countdownText").objectReferenceValue = text;
-            serialized.FindProperty("canvasGroup").objectReferenceValue = panel.GetComponent<CanvasGroup>();
+            CanvasGroup canvasGroup = panel.GetComponent<CanvasGroup>();
+            if (canvasGroup == null)
+            {
+                canvasGroup = panel.AddComponent<CanvasGroup>();
+            }
+
+            serialized.FindProperty("canvasGroup").objectReferenceValue = canvasGroup;
             serialized.FindProperty("audioSource").objectReferenceValue = audio;
             serialized.FindProperty("countClip").objectReferenceValue = beep;
             serialized.FindProperty("startClip").objectReferenceValue = start;
