@@ -8,7 +8,7 @@ namespace XrRacing.Editor.Build
 {
     public static class CreateSampleBuildProfiles
     {
-        [MenuItem("Build Commands/Create Sample Build Profiles")]
+        // [MenuItem("Build Commands/Create Sample Build Profiles")]
         public static void Create()
         {
             InstalledPlatformInfo androidPlatform = BuildProfile.GetInstalledPlatformModules()

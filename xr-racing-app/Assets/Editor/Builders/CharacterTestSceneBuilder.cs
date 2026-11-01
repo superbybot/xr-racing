@@ -59,7 +59,7 @@ namespace XrRacing.Editor.Characters
             "LocomotionControllerInteractorGroup", "MicroGesturesLocomotionHandInteractorGroup"
         };
 
-        [MenuItem("XR Racing/Build Character Test Scene")]
+        // [MenuItem("XR Racing/Build Character Test Scene")]
         public static void Build()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode)

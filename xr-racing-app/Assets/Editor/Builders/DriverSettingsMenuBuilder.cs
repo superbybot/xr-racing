@@ -42,7 +42,7 @@ namespace XrRacing.Editor.UI
 
         private const string DrivingScenePath = "Assets/Gameplay/Scenes/DrivingPrototype_VR.unity";
 
-        [MenuItem("XR Racing/Build Driver Settings Menu")]
+        // [MenuItem("XR Racing/Build Driver Settings Menu")]
         public static void Build()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode)

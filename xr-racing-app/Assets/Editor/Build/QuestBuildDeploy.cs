@@ -16,7 +16,7 @@ namespace XrRacing.Editor.Build
         private const string BuildDir = "Builds/Android";
         private const string ApkPrefix = "xr-racing-app";
 
-        [MenuItem("Build Commands/Build APK")]
+        // [MenuItem("Build Commands/Build APK")]
         public static void BuildApk()
         {
             if (Application.isBatchMode)
@@ -33,7 +33,7 @@ namespace XrRacing.Editor.Build
             }
         }
 
-        [MenuItem("Build Commands/Build and Deploy to Quest")]
+        // [MenuItem("Build Commands/Build and Deploy to Quest")]
         public static void BuildAndDeploy()
         {
             if (Application.isBatchMode)
@@ -61,13 +61,13 @@ namespace XrRacing.Editor.Build
             }
         }
 
-        [MenuItem("Build Commands/Build and Deploy Interaction SDK Samples")]
+        // [MenuItem("Build Commands/Build and Deploy Interaction SDK Samples")]
         public static void BuildAndDeployInteractionSdkSamples()
         {
             BuildAndDeployWithProfile("InteractionSdkSamples", "interaction-sdk-samples", ".interactionsamples");
         }
 
-        [MenuItem("Build Commands/Build and Deploy Core SDK Samples")]
+        // [MenuItem("Build Commands/Build and Deploy Core SDK Samples")]
         public static void BuildAndDeployCoreSdkSamples()
         {
             BuildAndDeployWithProfile("CoreSdkSamples", "core-sdk-samples", ".coresdksamples");
@@ -114,7 +114,7 @@ namespace XrRacing.Editor.Build
             }
         }
 
-        [MenuItem("Build Commands/Deploy Last Build")]
+        // [MenuItem("Build Commands/Deploy Last Build")]
         public static void DeployLastBuild()
         {
             string apkPath = FindLatestApk();

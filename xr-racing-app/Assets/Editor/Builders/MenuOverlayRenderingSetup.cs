@@ -16,7 +16,7 @@ namespace XrRacing.Editor.UI
     {
         private const string FeatureName = "Menu Overlay (draw on top)";
 
-        [MenuItem("XR Racing/Set Up Menu Draw-On-Top")]
+        // [MenuItem("XR Racing/Set Up Menu Draw-On-Top")]
         public static void Run()
         {
             int layer = EnsureLayer();

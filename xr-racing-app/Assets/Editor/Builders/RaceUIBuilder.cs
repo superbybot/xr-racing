@@ -35,7 +35,7 @@ namespace XrRacing.Editor.Race
 
         private static TMP_Text _textStyle;
 
-        [MenuItem("XR Racing/Build Race System")]
+        // [MenuItem("XR Racing/Build Race System")]
         public static void Build()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode)

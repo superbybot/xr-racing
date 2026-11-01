@@ -48,7 +48,7 @@ namespace XrRacing.Editor.Tracks
             "BackgroundMusic",
         };
 
-        [MenuItem("XR Racing/Build Track Scenes")]
+        // [MenuItem("XR Racing/Build Track Scenes")]
         public static void Build()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode)
