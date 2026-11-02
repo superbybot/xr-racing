@@ -57,6 +57,10 @@ namespace XrRacing.Gameplay.Diagnostics
             _panel = panel;
             _rig = rig;
             _head = head;
+
+            RayInteractable interactable = panel != null ? panel.GetComponentInChildren<RayInteractable>(true) : null;
+            _surface = interactable != null ? interactable.Surface.Transform : null;
+            _clipper = panel != null ? panel.GetComponentInChildren<BoundsClipper>(true) : null;
         }
 
         private void OnEnable()
@@ -137,7 +141,7 @@ namespace XrRacing.Gameplay.Diagnostics
                 return;
             }
 
-            Transform cameraTransform = _head != null ? _head : (Camera.main != null ? Camera.main.transform : null);
+            Transform cameraTransform = _head;
             Vector3 cameraPosition = cameraTransform != null ? cameraTransform.position : Vector3.zero;
             float panelDistance = _panel != null ? Vector3.Distance(cameraPosition, _panel.transform.position) : -1f;
 
@@ -280,13 +284,6 @@ namespace XrRacing.Gameplay.Diagnostics
         // next to the clip rectangle: a miss inside the rectangle points at the ray/surface, one outside at the aim.
         private void AppendPlaneCrossing(RayInteractor ray)
         {
-            if (_surface == null && _panel != null)
-            {
-                RayInteractable interactable = _panel.GetComponentInChildren<RayInteractable>(true);
-                _surface = interactable != null ? interactable.Surface.Transform : null;
-                _clipper = _panel.GetComponentInChildren<BoundsClipper>(true);
-            }
-
             if (_surface == null)
             {
                 return;

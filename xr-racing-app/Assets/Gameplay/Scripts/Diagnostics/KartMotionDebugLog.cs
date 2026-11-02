@@ -1,5 +1,6 @@
-using XrRacing.References.KartGame.KartSystems;
+using Oculus.Interaction;
 using UnityEngine;
+using XrRacing.References.KartGame.KartSystems;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System.Text;
 using UnityEngine.SceneManagement;
@@ -34,6 +35,16 @@ namespace XrRacing.Gameplay.Diagnostics
         [Tooltip("Flag CAM_JITTER when the camera's height moves this much more than the kart's in one frame (m).")]
         [SerializeField, Min(0f)] private float cameraJitter = 0.01f;
 
+        [Header("References")]
+        [Tooltip("Player head: the OVRCameraRig's center eye anchor.")]
+        [SerializeField] private Transform _head;
+        [Tooltip("The kart's OVRCameraRig, for the hand anchors.")]
+        [SerializeField] private OVRCameraRig _rig;
+        [Tooltip("The steering wheel: XRWheelInput's wheel transform.")]
+        [SerializeField] private Transform _wheel;
+        [Tooltip("The steering wheel's Grabbable.")]
+        [SerializeField] private Grabbable _wheelGrabbable;
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private const float SummaryInterval = 1f;
         private const float FlipWindow = 0.5f;
@@ -44,10 +55,6 @@ namespace XrRacing.Gameplay.Diagnostics
         private ArcadeKart _kart;
         private Rigidbody _body;
         private WheelCollider[] _wheels;
-        private Transform _camera;
-        private OVRCameraRig _rig;
-        private Transform _wheel;
-        private Oculus.Interaction.Grabbable _wheelGrabbable;
         private float _airTime;
         private float _landingLogUntil;
         private float _nextLandingLog;
@@ -210,14 +217,8 @@ namespace XrRacing.Gameplay.Diagnostics
                 return;
             }
 
-            if (_camera == null)
-            {
-                OVRCameraRig rig = GetComponentInChildren<OVRCameraRig>();
-                _camera = rig != null ? rig.centerEyeAnchor : (Camera.main != null ? Camera.main.transform : null);
-            }
-
             float kartY = transform.position.y;
-            float cameraY = _camera != null ? _camera.position.y : 0f;
+            float cameraY = _head != null ? _head.position.y : 0f;
 
             // A big one-frame jump is the kart being placed (track load / respawn), not motion.
             if (_hasLastFrame && Mathf.Abs(kartY - _lastKartY) > 0.5f)
@@ -277,14 +278,6 @@ namespace XrRacing.Gameplay.Diagnostics
         // centered on the wheel. Grab points are where the (snapped) hands hold the wheel.
         private void LogWheelAndHands()
         {
-            if (_wheel == null)
-            {
-                XrRacing.Gameplay.Input.XRWheelInput input = GetComponentInChildren<XrRacing.Gameplay.Input.XRWheelInput>(true);
-                _wheel = input != null ? input.WheelTransform : null;
-                _wheelGrabbable = _wheel != null ? _wheel.GetComponent<Oculus.Interaction.Grabbable>() : null;
-                _rig = GetComponentInChildren<OVRCameraRig>();
-            }
-
             if (_wheel == null || _wheel.parent == null)
             {
                 return;
@@ -298,9 +291,9 @@ namespace XrRacing.Gameplay.Diagnostics
                 .Append(" mountTiltLag=").Append(F(Vector3.Angle(mount.up, transform.up)))
                 .Append(" kartTilt=").Append(F(Vector3.Angle(transform.up, Vector3.up)));
 
-            if (_camera != null)
+            if (_head != null)
             {
-                _line.Append(" headInKart=").Append(V(transform.InverseTransformPoint(_camera.position)));
+                _line.Append(" headInKart=").Append(V(transform.InverseTransformPoint(_head.position)));
             }
 
             if (_rig != null)

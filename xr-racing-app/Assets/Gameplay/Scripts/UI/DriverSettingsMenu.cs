@@ -339,13 +339,7 @@ namespace XrRacing.Gameplay.UI
 
         private Transform GetHead()
         {
-            Transform head = seat != null ? seat.Head : null;
-            if (head == null && Camera.main != null)
-            {
-                head = Camera.main.transform;
-            }
-
-            return head;
+            return seat != null ? seat.Head : null;
         }
 
         // Where the panel should be: in front of the head (level, ignoring head pitch), facing it.

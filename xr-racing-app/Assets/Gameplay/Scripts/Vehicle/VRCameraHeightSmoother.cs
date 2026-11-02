@@ -14,8 +14,10 @@ namespace XrRacing.Gameplay.Vehicle
     [DefaultExecutionOrder(-200)] // before OVRCameraRig, the interactors and the menu, so they all see this frame's rig pose
     public class VRCameraHeightSmoother : MonoBehaviour
     {
-        [Tooltip("The kart; defaults to the parent.")]
+        [Tooltip("The kart.")]
         [SerializeField] private Transform followTarget;
+        [Tooltip("Player head: the OVRCameraRig's center eye anchor. Tilt smoothing turns the view around it.")]
+        [SerializeField] private Transform _head;
         [Tooltip("Seconds the view takes to follow the kart's up/down movement.")]
         [SerializeField, Min(0f)] private float smoothTime = 0.12f;
         [Tooltip("Max meters the view may lag the kart vertically.")]
@@ -30,8 +32,8 @@ namespace XrRacing.Gameplay.Vehicle
         [SerializeField, Range(0f, 45f)] private float maxTiltLag = 5f;
 
         [Header("Steering wheel")]
-        [Tooltip("Moves with the view (not the kart's tilt), so it stays in the player's hands on ramps, jumps and " +
-            "bumps. Defaults to the wheel of the kart's XRWheelInput.")]
+        [Tooltip("The steering wheel (XRWheelInput's wheel). Moves with the view (not the kart's tilt), so it stays in " +
+            "the player's hands on ramps, jumps and bumps.")]
         [SerializeField] private Transform steeringWheel;
         [Tooltip("How much of the kart's tilt the wheel shows, turning around its own hub so the rim barely moves " +
             "under the hands. Gives a feel of the kart pitching on ramps. 0 = none.")]
@@ -46,7 +48,6 @@ namespace XrRacing.Gameplay.Vehicle
         private float _velocity;
         private Vector3 _smoothedUp = Vector3.up;
         private Vector3 _heading = Vector3.forward;
-        private Transform _head;
         private Transform _wheelMount;
         private Vector3 _wheelMountLocalPosition;
         private Quaternion _wheelTilt = Quaternion.identity;
@@ -69,16 +70,8 @@ namespace XrRacing.Gameplay.Vehicle
 
         private void Awake()
         {
-            if (followTarget == null)
-            {
-                followTarget = transform.parent;
-            }
-
             _baseLocalPosition = transform.localPosition;
             SeatRotation = transform.localRotation;
-
-            OVRCameraRig rig = GetComponentInChildren<OVRCameraRig>();
-            _head = rig != null ? rig.centerEyeAnchor : null;
 
             if (followTarget != null)
             {
@@ -90,19 +83,14 @@ namespace XrRacing.Gameplay.Vehicle
         // After every Awake, so XRWheelInput has cached the wheel's rest rotation.
         private void Start()
         {
-            if (steeringWheel == null && followTarget != null)
-            {
-                XrRacing.Gameplay.Input.XRWheelInput wheelInput = followTarget.GetComponentInChildren<XrRacing.Gameplay.Input.XRWheelInput>(true);
-                steeringWheel = wheelInput != null ? wheelInput.WheelTransform : null;
-            }
-
             if (steeringWheel == null || steeringWheel.parent == null)
             {
                 return;
             }
 
             // A mount between the wheel and its parent that this owns, so the wheel keeps its own local rotation
-            // (XRWheelInput spins it) while the mount is steadied. The mount's axes match the old parent's.
+            // (XRWheelInput spins it) while the mount is steadied. The mount's axes match the old parent's. Built at
+            // runtime because the wheel sits inside the nested Karting prefab, which PlayerKart_VR can't restructure.
             _wheelMount = new GameObject("SteeringWheelMount").transform;
             _wheelMount.SetParent(steeringWheel.parent, false);
             _wheelMount.localPosition = steeringWheel.localPosition;

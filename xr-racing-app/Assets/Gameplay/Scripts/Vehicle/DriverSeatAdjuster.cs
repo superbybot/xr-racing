@@ -21,7 +21,7 @@ namespace XrRacing.Gameplay.Vehicle
     {
         [Tooltip("Where the driver's eyes should be, as a child of the kart. Its forward is the kart's forward.")]
         [SerializeField] private Transform eyePoint;
-        [Tooltip("Player head. Defaults to the OVRCameraRig's center eye.")]
+        [Tooltip("Player head: the OVRCameraRig's center eye anchor.")]
         [SerializeField] private Transform head;
         [Tooltip("Meters moved per Height / Distance step away from the default (5).")]
         [SerializeField] private float stepMeters = 0.03f;
@@ -38,6 +38,9 @@ namespace XrRacing.Gameplay.Vehicle
         [Tooltip("Seconds to wait after tracking starts before the automatic recenter, so the head pose has settled.")]
         [SerializeField, Min(0f)] private float recenterOnStartDelay = 1f;
 
+        [Tooltip("Black full-view image on a world-space canvas, a child of the head just past the near clip plane, on the MenuOverlay layer. Shown around big moves.")]
+        [SerializeField] private Image _fade;
+
         private const float FadeAboveDegrees = 1f;
 
         private VRCameraHeightSmoother _smoother;
@@ -46,7 +49,6 @@ namespace XrRacing.Gameplay.Vehicle
         private Quaternion _targetRotation = Quaternion.identity;
         private Vector3 _glideVelocity;
         private Coroutine _fadeMove;
-        private Image _fade;
 
         public Transform Head => head;
 
@@ -54,12 +56,6 @@ namespace XrRacing.Gameplay.Vehicle
         {
             _smoother = GetComponent<VRCameraHeightSmoother>();
             _baseLocalRotation = transform.localRotation;
-
-            if (head == null || !head)
-            {
-                OVRCameraRig rig = GetComponentInChildren<OVRCameraRig>();
-                head = rig != null && rig.centerEyeAnchor != null ? rig.centerEyeAnchor : GetComponentInChildren<Camera>()?.transform;
-            }
         }
 
         private void OnEnable()
@@ -310,42 +306,11 @@ namespace XrRacing.Gameplay.Vehicle
         {
             if (_fade == null)
             {
-                if (alpha <= 0f || head == null)
-                {
-                    return;
-                }
-
-                _fade = CreateFade();
+                return;
             }
 
             _fade.color = new Color(0f, 0f, 0f, alpha);
             _fade.enabled = alpha > 0f;
-        }
-
-        // A black world-space UI quad just past the near clip plane. UI/Default is always in builds, unlike the
-        // shader OVRScreenFade looks up by name.
-        private Image CreateFade()
-        {
-            Camera eyeCamera = head.GetComponent<Camera>();
-            float distance = (eyeCamera != null ? eyeCamera.nearClipPlane : 0.05f) + 0.02f;
-
-            var go = new GameObject("SeatMoveFade", typeof(RectTransform), typeof(Canvas), typeof(Image));
-            // On the menu's draw-on-top layer when it exists, so a fade still covers the menu.
-            int overlay = XrRacing.Gameplay.UI.OverlayLayer.Index;
-            go.layer = overlay >= 0 ? overlay : head.gameObject.layer;
-            go.transform.SetParent(head, false);
-            go.transform.localPosition = new Vector3(0f, 0f, distance);
-            go.transform.localRotation = Quaternion.identity;
-            go.transform.localScale = Vector3.one * 0.01f;
-
-            Canvas canvas = go.GetComponent<Canvas>();
-            canvas.renderMode = RenderMode.WorldSpace;
-            canvas.sortingOrder = short.MaxValue;
-            ((RectTransform)go.transform).sizeDelta = new Vector2(200f, 200f); // 2 m square, covers the whole view
-
-            Image image = go.GetComponent<Image>();
-            image.raycastTarget = false;
-            return image;
         }
     }
 }
