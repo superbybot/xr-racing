@@ -390,8 +390,9 @@ adds or moves. The method itself stays; only the attribute is commented out, so 
 menu can be switched back on by removing the `//` when someone is about to use it.
 
 **Why:** leftover menus clutter the Editor and invite running one-off builders by accident.
-**Exempt:** a menu the PR description says is in active use, under `## Review focus`
-or in the summary. CI entry points (`-executeMethod`) don't need a menu at all.
+**Exempt:** CI/CD menus — build and deploy commands in `Assets/Editor/Build/` stay active
+(e.g. `Build Commands/Build and Deploy to Quest`). Also a menu the PR description says is
+in active use, under `## Review focus` or in the summary.
 ````
 
 ### `docs/review-rules/no-runtime-addcomponent.md`
