@@ -35,6 +35,9 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Comment with the workflow's own token, so the Claude GitHub App doesn't have to be
+          # installed on the repo owner's account.
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
@@ -46,20 +49,23 @@ jobs:
             apply it only to changed files matching `applies_to` (comma-separated globs,
             all files when absent); use its `severity` (must-fix / should-fix / nit).
             Also apply any extra checks listed under a "## Review focus" heading in the PR
-            description (`gh pr view`), for this PR only. Review against these rules plus
-            real bugs, nothing else. Look at the changed lines (`gh pr diff`) and read the
-            surrounding files for context.
+            description (`gh pr view ${{ github.event.pull_request.number }} --json title,body`), for this PR only. Review against these rules plus
+            real bugs, nothing else. Look at the changed lines (`gh pr diff ${{ github.event.pull_request.number }}`) and read the
+            surrounding files for context. The project's CLAUDE.md has background if you need it.
 
             1. For each issue, post an inline comment on the line with
                mcp__github_inline_comment__create_inline_comment. Start it with the severity
                in bold (**Must fix**, **Should fix** or **Nit**) and the rule file name in
                brackets (e.g. [performance] or [bug]), then the problem in one sentence,
                then the concrete fix (a suggestion block when it's small).
-            2. Then post one summary comment with `gh pr comment`, exactly in this shape so
-               an agent can parse it:
+            2. Then write the summary comment, updating the previous one instead of adding
+               a new comment on every push:
+               `gh pr comment ${{ github.event.pull_request.number }} --edit-last --create-if-none --body "<summary>"`.
+               Use exactly this shape so an agent can parse it:
 
                ## PR review
                Verdict: CHANGES REQUESTED | APPROVED
+               Commit: ${{ github.event.pull_request.head.sha }}
                - [ ] **Must fix** [rule] `path/File.cs:123` — problem — fix
                - [ ] **Should fix** ...
                - [ ] **Nit** ...
