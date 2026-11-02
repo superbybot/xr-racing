@@ -72,7 +72,8 @@ adopted Karting Microgame code in `References/KartGame/` (its own assembly,
 
 Write C# to the rules in `docs/review-rules/` (no self-explanatory comments, no runtime
 `AddComponent` quick fixes — use `[SerializeField]`, Microsoft C# conventions,
-MVVM/Clean Architecture where it fits, no per-frame allocations).
+explicit access modifiers, `_camelCase` fields at every access level, a `<summary>` on
+every type, MVVM/Clean Architecture where it fits, no per-frame allocations).
 
 When the user asks to add, change or drop a review rule, edit `docs/review-rules/`
 (one file per rule, front matter per `docs/review-rules/README.md`; `enabled: false`

@@ -6,9 +6,8 @@ added: 2026-11-01
 ---
 # Microsoft C# conventions
 
-- PascalCase for types, methods, properties, events, constants and public fields;
-  `_camelCase` for private fields in new code (existing serialized fields keep their
-  names until renamed with `[FormerlySerializedAs]`).
+- PascalCase for types, methods, properties, events and constants. Fields are
+  `_camelCase` at every access level (see `field-naming.md`).
 - `var` when the type is obvious from the right-hand side.
 - One type per file, named after the type. Namespace matches the folder:
   `XrRacing.Gameplay.<Folder>`, `XrRacing.Editor.<Folder>`.
