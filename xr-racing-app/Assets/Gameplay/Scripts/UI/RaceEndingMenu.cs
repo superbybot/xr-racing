@@ -95,10 +95,6 @@ namespace XrRacing.Gameplay.UI
         private void PlaceInFrontOfHead()
         {
             Transform head = seat != null ? seat.Head : null;
-            if (head == null && Camera.main != null)
-            {
-                head = Camera.main.transform;
-            }
 
             if (head == null)
             {

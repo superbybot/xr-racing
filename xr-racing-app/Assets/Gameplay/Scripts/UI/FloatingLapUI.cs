@@ -23,16 +23,12 @@ namespace XrRacing.Gameplay.UI
         [SerializeField] private Color finalLapColor = new Color(1f, 0.75f, 0f, 1f);
         [Tooltip("Color of the GOAAAAL text.")]
         [SerializeField] private Color goalColor = new Color(0.1f, 0.9f, 0.3f, 1f);
-        [Tooltip("Seat whose head the card turns to face. Falls back to the main camera.")]
+        [Tooltip("Seat whose head the card turns to face.")]
         [SerializeField] private DriverSeatAdjuster seat;
 
         private Transform GetHead()
         {
-            if (seat != null && seat.Head != null)
-            {
-                return seat.Head;
-            }
-            return Camera.main != null ? Camera.main.transform : null;
+            return seat != null ? seat.Head : null;
         }
 
         private void LateUpdate()
