@@ -19730,7 +19730,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::XrRacing.Gameplay.Vehicle.VRCameraHeightSmoother
   followTarget: {fileID: 6414228595842160881}
-  head: {fileID: 2056115113084458078}
+  _head: {fileID: 2056115113084458078}
   smoothTime: 0.12
   maxOffset: 0.1
   horizonLock: 1
@@ -19760,7 +19760,7 @@ MonoBehaviour:
   fadeTime: 0.1
   recenterOnStart: 1
   recenterOnStartDelay: 1
-  fade: {fileID: 7892802705004032761}
+  _fade: {fileID: 7892802705004032761}
 --- !u!1 &7961911776306070503
 GameObject:
   m_ObjectHideFlags: 0
@@ -23110,10 +23110,10 @@ MonoBehaviour:
   bounceAcceleration: 25
   oscillationFlips: 4
   cameraJitter: 0.01
-  head: {fileID: 2056115113084458078}
-  rig: {fileID: 6229467142620595669}
-  wheel: {fileID: 8645441941003108430}
-  wheelGrabbable: {fileID: 4539474454409822586}
+  _head: {fileID: 2056115113084458078}
+  _rig: {fileID: 6229467142620595669}
+  _wheel: {fileID: 8645441941003108430}
+  _wheelGrabbable: {fileID: 4539474454409822586}
 --- !u!137 &8645441940991906170 stripped
 SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: 7798798854743944591, guid: 19954de30401f73428254541a9ad156e, type: 3}

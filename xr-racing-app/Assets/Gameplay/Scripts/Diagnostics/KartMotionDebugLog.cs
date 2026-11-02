@@ -37,13 +37,13 @@ namespace XrRacing.Gameplay.Diagnostics
 
         [Header("References")]
         [Tooltip("Player head: the OVRCameraRig's center eye anchor.")]
-        [SerializeField] private Transform head;
+        [SerializeField] private Transform _head;
         [Tooltip("The kart's OVRCameraRig, for the hand anchors.")]
-        [SerializeField] private OVRCameraRig rig;
+        [SerializeField] private OVRCameraRig _rig;
         [Tooltip("The steering wheel: XRWheelInput's wheel transform.")]
-        [SerializeField] private Transform wheel;
+        [SerializeField] private Transform _wheel;
         [Tooltip("The steering wheel's Grabbable.")]
-        [SerializeField] private Grabbable wheelGrabbable;
+        [SerializeField] private Grabbable _wheelGrabbable;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private const float SummaryInterval = 1f;
@@ -218,7 +218,7 @@ namespace XrRacing.Gameplay.Diagnostics
             }
 
             float kartY = transform.position.y;
-            float cameraY = head != null ? head.position.y : 0f;
+            float cameraY = _head != null ? _head.position.y : 0f;
 
             // A big one-frame jump is the kart being placed (track load / respawn), not motion.
             if (_hasLastFrame && Mathf.Abs(kartY - _lastKartY) > 0.5f)
@@ -278,39 +278,39 @@ namespace XrRacing.Gameplay.Diagnostics
         // centered on the wheel. Grab points are where the (snapped) hands hold the wheel.
         private void LogWheelAndHands()
         {
-            if (wheel == null || wheel.parent == null)
+            if (_wheel == null || _wheel.parent == null)
             {
                 return;
             }
 
-            Transform mount = wheel.parent;
-            Vector3 FromHub(Vector3 world) => mount.InverseTransformPoint(world) - wheel.localPosition;
+            Transform mount = _wheel.parent;
+            Vector3 FromHub(Vector3 world) => mount.InverseTransformPoint(world) - _wheel.localPosition;
 
             _line.Clear();
-            _line.Append("hubInKart=").Append(V(transform.InverseTransformPoint(wheel.position)))
+            _line.Append("hubInKart=").Append(V(transform.InverseTransformPoint(_wheel.position)))
                 .Append(" mountTiltLag=").Append(F(Vector3.Angle(mount.up, transform.up)))
                 .Append(" kartTilt=").Append(F(Vector3.Angle(transform.up, Vector3.up)));
 
-            if (head != null)
+            if (_head != null)
             {
-                _line.Append(" headInKart=").Append(V(transform.InverseTransformPoint(head.position)));
+                _line.Append(" headInKart=").Append(V(transform.InverseTransformPoint(_head.position)));
             }
 
-            if (rig != null)
+            if (_rig != null)
             {
-                Vector3 left = FromHub(rig.leftHandAnchor.position);
-                Vector3 right = FromHub(rig.rightHandAnchor.position);
+                Vector3 left = FromHub(_rig.leftHandAnchor.position);
+                Vector3 right = FromHub(_rig.rightHandAnchor.position);
                 _line.Append(" leftFromHub=").Append(V(left))
                     .Append(" rightFromHub=").Append(V(right))
                     .Append(" midFromHub=").Append(V((left + right) * 0.5f));
             }
 
-            if (wheelGrabbable != null)
+            if (_wheelGrabbable != null)
             {
-                _line.Append(" held=").Append(wheelGrabbable.SelectingPointsCount);
-                for (int i = 0; i < wheelGrabbable.GrabPoints.Count; i++)
+                _line.Append(" held=").Append(_wheelGrabbable.SelectingPointsCount);
+                for (int i = 0; i < _wheelGrabbable.GrabPoints.Count; i++)
                 {
-                    _line.Append(" grab").Append(i).Append("FromHub=").Append(V(FromHub(wheelGrabbable.GrabPoints[i].position)));
+                    _line.Append(" grab").Append(i).Append("FromHub=").Append(V(FromHub(_wheelGrabbable.GrabPoints[i].position)));
                 }
             }
 

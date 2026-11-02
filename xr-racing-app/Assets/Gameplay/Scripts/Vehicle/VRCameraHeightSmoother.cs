@@ -17,7 +17,7 @@ namespace XrRacing.Gameplay.Vehicle
         [Tooltip("The kart.")]
         [SerializeField] private Transform followTarget;
         [Tooltip("Player head: the OVRCameraRig's center eye anchor. Tilt smoothing turns the view around it.")]
-        [SerializeField] private Transform head;
+        [SerializeField] private Transform _head;
         [Tooltip("Seconds the view takes to follow the kart's up/down movement.")]
         [SerializeField, Min(0f)] private float smoothTime = 0.12f;
         [Tooltip("Max meters the view may lag the kart vertically.")]
@@ -152,7 +152,7 @@ namespace XrRacing.Gameplay.Vehicle
             if (correction != Quaternion.identity)
             {
                 // Pivot around the head so filtering the tilt doesn't swing the viewpoint.
-                Vector3 pivot = head != null ? head.position : transform.position;
+                Vector3 pivot = _head != null ? _head.position : transform.position;
                 transform.SetPositionAndRotation(
                     pivot + correction * (transform.position - pivot),
                     correction * transform.rotation);

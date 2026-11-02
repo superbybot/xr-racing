@@ -39,7 +39,7 @@ namespace XrRacing.Gameplay.Vehicle
         [SerializeField, Min(0f)] private float recenterOnStartDelay = 1f;
 
         [Tooltip("Black full-view image on a world-space canvas, a child of the head just past the near clip plane, on the MenuOverlay layer. Shown around big moves.")]
-        [SerializeField] private Image fade;
+        [SerializeField] private Image _fade;
 
         private const float FadeAboveDegrees = 1f;
 
@@ -280,7 +280,7 @@ namespace XrRacing.Gameplay.Vehicle
         /// </summary>
         public async UniTask FadeAsync(float alpha, CancellationToken cancellationToken)
         {
-            float start = fade != null ? fade.color.a : 0f;
+            float start = _fade != null ? _fade.color.a : 0f;
             for (float t = 0f; t < fadeTime; t += Time.unscaledDeltaTime)
             {
                 SetFade(Mathf.Lerp(start, alpha, t / fadeTime));
@@ -292,7 +292,7 @@ namespace XrRacing.Gameplay.Vehicle
 
         private IEnumerator FadeTo(float alpha)
         {
-            float start = fade != null ? fade.color.a : 0f;
+            float start = _fade != null ? _fade.color.a : 0f;
             for (float t = 0f; t < fadeTime; t += Time.unscaledDeltaTime)
             {
                 SetFade(Mathf.Lerp(start, alpha, t / fadeTime));
@@ -304,13 +304,13 @@ namespace XrRacing.Gameplay.Vehicle
 
         private void SetFade(float alpha)
         {
-            if (fade == null)
+            if (_fade == null)
             {
                 return;
             }
 
-            fade.color = new Color(0f, 0f, 0f, alpha);
-            fade.enabled = alpha > 0f;
+            _fade.color = new Color(0f, 0f, 0f, alpha);
+            _fade.enabled = alpha > 0f;
         }
     }
 }
