@@ -8,7 +8,7 @@ namespace XrRacing.Gameplay.Characters
     /// Simulator replays one recorded body pose instead of tracking the user, so the retargeted character stands frozen.
     /// The root follows the headset across the floor and turns with it, the head copies the headset's rotation, and each
     /// arm reaches its hand anchor with two-bone IK. Unless forced on, it switches itself off outside the Simulator and
-    /// leaves the Movement SDK body tracking in charge.
+    /// leaves the Movement SDK body tracking in charge. With a seat set, the hips stay in the seat (for a driver) and only the head and arms follow tracking.
     /// </summary>
     // Runs before MirrorTransforms (150) so the reflection copies this frame's pose.
     [DefaultExecutionOrder(100)]
@@ -26,6 +26,8 @@ namespace XrRacing.Gameplay.Characters
         [SerializeField] private Transform _head;
         [SerializeField] private Transform _leftHand;
         [SerializeField] private Transform _rightHand;
+        [Tooltip("Seat on a vehicle. When set, the character's root sits here and moves and turns with it, instead of following the headset across the floor, and Match Player Height is skipped.")]
+        [SerializeField] private Transform _seat;
 
         [Tooltip("Body-tracking components (retargeter, source data provider) to switch off while this driver runs.")]
         [SerializeField] private Behaviour[] _bodyTrackingBehaviours = Array.Empty<Behaviour>();
@@ -103,22 +105,30 @@ namespace XrRacing.Gameplay.Characters
         private void LateUpdate()
         {
             var root = _animator.transform;
-            var eyeHeight = _head.position.y - _floorHeight;
-            if (_matchPlayerHeight && !_heightMatched && _restEyeHeight > 0f && eyeHeight > MinTrackedEyeHeight)
-            {
-                root.localScale = _restScale * (eyeHeight / _restEyeHeight);
-                _heightMatched = true;
-            }
 
-            var facing = Vector3.ProjectOnPlane(_head.forward, Vector3.up);
-            if (facing.sqrMagnitude > 1e-4f)
+            if (_seat != null)
             {
-                root.rotation = Quaternion.LookRotation(facing.normalized, Vector3.up);
+                root.SetPositionAndRotation(_seat.position, _seat.rotation);
             }
+            else
+            {
+                var eyeHeight = _head.position.y - _floorHeight;
+                if (_matchPlayerHeight && !_heightMatched && _restEyeHeight > 0f && eyeHeight > MinTrackedEyeHeight)
+                {
+                    root.localScale = _restScale * (eyeHeight / _restEyeHeight);
+                    _heightMatched = true;
+                }
 
-            var rootPosition = _head.position - root.forward * _neckOffset;
-            rootPosition.y = _floorHeight;
-            root.position = rootPosition;
+                var facing = Vector3.ProjectOnPlane(_head.forward, Vector3.up);
+                if (facing.sqrMagnitude > 1e-4f)
+                {
+                    root.rotation = Quaternion.LookRotation(facing.normalized, Vector3.up);
+                }
+
+                var rootPosition = _head.position - root.forward * _neckOffset;
+                rootPosition.y = _floorHeight;
+                root.position = rootPosition;
+            }
 
             if (_headBone != null)
             {
