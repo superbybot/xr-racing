@@ -14,7 +14,7 @@ namespace XrRacing.Gameplay.Characters
     [DefaultExecutionOrder(100)]
     public class HeadAndHandsAvatarDriver : MonoBehaviour
     {
-        public enum Mode
+        private enum Mode
         {
             SimulatorOnly,
             Always,
