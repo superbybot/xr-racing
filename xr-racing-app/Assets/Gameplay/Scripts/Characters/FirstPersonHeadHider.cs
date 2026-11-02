@@ -21,7 +21,7 @@ namespace XrRacing.Gameplay.Characters
         private void Awake()
         {
             _headBone = _animator != null ? _animator.GetBoneTransform(HumanBodyBones.Head) : null;
-            
+
             if (_headBone == null || _firstPersonCamera == null)
             {
                 enabled = false;
