@@ -337,6 +337,28 @@ public class KartCameraFollow : MonoBehaviour
 ```
 ````
 
+### `docs/review-rules/enum-own-file.md`
+
+````markdown
+---
+severity: should-fix
+applies_to: "xr-racing-app/Assets/Gameplay/**/*.cs, xr-racing-app/Assets/Editor/**/*.cs"
+enabled: true
+added: 2026-11-02
+---
+# Enums in their own file
+
+Every enum lives in its own file named after it (`RaceState` → `RaceState.cs`), at namespace
+level, with its own `/// <summary>`. Flag an enum declared next to another type, including a
+public enum nested in a class (`HeadAndHandsAvatarDriver.Mode`): move it out and give it a name
+that stands on its own (`AvatarDriverMode`).
+
+**Why:** enums are shared vocabulary; a separate file makes them easy to find and reuse, and keeps
+the class file about the class.
+**Exempt:** a `private` enum used only inside its class.
+**Example:** `public enum RaceState { … }` at the top of `RaceManager.cs` → `Race/RaceState.cs`.
+````
+
 ### `docs/review-rules/folder-conventions.md`
 
 ````markdown
@@ -390,8 +412,9 @@ adds or moves. The method itself stays; only the attribute is commented out, so 
 menu can be switched back on by removing the `//` when someone is about to use it.
 
 **Why:** leftover menus clutter the Editor and invite running one-off builders by accident.
-**Exempt:** a menu the PR description says is in active use, under `## Review focus`
-or in the summary. CI entry points (`-executeMethod`) don't need a menu at all.
+**Exempt:** CI/CD menus — build and deploy commands in `Assets/Editor/Build/` stay active
+(e.g. `Build Commands/Build and Deploy to Quest`). Also a menu the PR description says is
+in active use, under `## Review focus` or in the summary.
 ````
 
 ### `docs/review-rules/no-runtime-addcomponent.md`
