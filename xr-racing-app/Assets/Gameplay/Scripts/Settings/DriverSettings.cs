@@ -3,12 +3,6 @@ using UnityEngine;
 
 namespace XrRacing.Gameplay.Settings
 {
-    public enum PedalAction
-    {
-        Accelerate,
-        Brake
-    }
-
     /// <summary>
     /// Player driving preferences, all saved to PlayerPrefs: Height, Distance, the pedal mapping and the last Recenter.
     /// </summary>

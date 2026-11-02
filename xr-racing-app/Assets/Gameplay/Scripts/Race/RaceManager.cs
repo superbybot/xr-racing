@@ -8,15 +8,6 @@ using XrRacing.Gameplay.UI;
 
 namespace XrRacing.Gameplay.Race
 {
-    public enum RaceState
-    {
-        None,       // Playground / Free roam
-        Ready,      // Placed at spawn
-        Countdown,  // 3, 2, 1, START!
-        Racing,     // Race active
-        Finished    // Cross goal, controls locked
-    }
-
     /// <summary>
     /// Central manager for the racing mechanics: start countdown, lap tracking, goal detection,
     /// and track-scoped state management (disabling race logic for Playground).

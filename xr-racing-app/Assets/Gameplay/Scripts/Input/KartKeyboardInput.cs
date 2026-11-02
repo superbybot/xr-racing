@@ -5,6 +5,10 @@ using XrRacing.References.KartGame.KartSystems;
 
 namespace XrRacing.Gameplay.Input
 {
+    /// <summary>
+    /// Keyboard driving for testing without a headset: A/D or arrows steer, W/up accelerates, S/down brakes.
+    /// Gives no input while RaceManager has the controls locked.
+    /// </summary>
     public class KartKeyboardInput : BaseInput
     {
         public override InputData GenerateInput()
