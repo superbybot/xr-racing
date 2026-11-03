@@ -49,13 +49,29 @@ namespace XrRacing.Editor.Builders
         {
             var kart = root.GetComponentInChildren<ArcadeKart>(true);
             var head = FindChild(root.transform, "CenterEyeAnchor");
-            var leftHand = FindChild(root.transform, "LeftHandAnchor");
-            var rightHand = FindChild(root.transform, "RightHandAnchor");
+            var leftHand = FindChild(root.transform, "LeftHandOnControllerAnchor") ?? FindChild(root.transform, "LeftHandAnchor");
+            var rightHand = FindChild(root.transform, "RightHandOnControllerAnchor") ?? FindChild(root.transform, "RightHandAnchor");
             var eyeCamera = head != null ? head.GetComponent<Camera>() : null;
             if (kart == null || head == null || leftHand == null || rightHand == null || eyeCamera == null)
             {
                 Debug.LogError("[DriverKartBuilder] Kart prefab is missing the ArcadeKart or camera rig anchors.");
                 return;
+            }
+
+            var eyePoint = FindChild(root.transform, "DriverEyePoint");
+            if (eyePoint != null)
+            {
+                eyePoint.localPosition = new Vector3(0.01f, 1.03f, -0.06f);
+            }
+
+            string[] hiddenVisuals = { "OVRHandVisualLeft", "OVRHandVisualRight", "OVRControllerVisualLeft", "OVRControllerVisualRight" };
+            foreach (var visualName in hiddenVisuals)
+            {
+                var visual = FindChild(root.transform, visualName);
+                if (visual != null)
+                {
+                    visual.gameObject.SetActive(false);
+                }
             }
 
             var seat = FindChild(root.transform, SeatName);
@@ -103,6 +119,17 @@ namespace XrRacing.Editor.Builders
             var playerAnimator = character.AddComponent<KartPlayerAnimator>();
             playerAnimator.Kart = kart;
             playerAnimator.PlayerAnimator = animator;
+
+            var wheelInput = root.GetComponentInChildren<XrRacing.Gameplay.Input.XRWheelInput>(true);
+            if (wheelInput != null)
+            {
+                var leftInteractors = FindChild(root.transform, "ComprehensiveInteractorsLeft");
+                var rightInteractors = FindChild(root.transform, "ComprehensiveInteractorsRight");
+                var serializedWheelInput = new SerializedObject(wheelInput);
+                serializedWheelInput.FindProperty("_leftInteractorsRoot").objectReferenceValue = leftInteractors;
+                serializedWheelInput.FindProperty("_rightInteractorsRoot").objectReferenceValue = rightInteractors;
+                serializedWheelInput.ApplyModifiedPropertiesWithoutUndo();
+            }
         }
 
         private static Transform FindChild(Transform root, string name)

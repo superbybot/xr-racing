@@ -15,7 +15,6 @@ namespace XrRacing.Gameplay.Characters
         [SerializeField] private Camera _firstPersonCamera;
 
         private Transform _headBone;
-        private SkinnedMeshRenderer[] _renderers;
         private Vector3 _headScale;
         private bool _hidden;
 
@@ -30,8 +29,8 @@ namespace XrRacing.Gameplay.Characters
             }
 
             // Without this the renderer skips re-skinning when only a bone's scale changed, so the collapsed head never shows.
-            _renderers = _animator.GetComponentsInChildren<SkinnedMeshRenderer>(true);
-            foreach (var renderer in _renderers)
+            var renderers = _animator.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+            foreach (var renderer in renderers)
             {
                 renderer.forceMatrixRecalculationPerRender = true;
             }
