@@ -25,6 +25,14 @@ namespace XrRacing.Gameplay.Characters
             if (_headBone == null || _firstPersonCamera == null)
             {
                 enabled = false;
+                return;
+            }
+
+            // Without this the renderer skips re-skinning when only a bone's scale changed, so the collapsed head never shows.
+            var renderers = _animator.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+            foreach (var renderer in renderers)
+            {
+                renderer.forceMatrixRecalculationPerRender = true;
             }
         }
 

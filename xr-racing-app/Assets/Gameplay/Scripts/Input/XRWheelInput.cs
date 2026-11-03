@@ -38,6 +38,8 @@ namespace XrRacing.Gameplay.Input
         [SerializeField] private TrackLoader trackLoader;
         [Tooltip("Temporary: write wheel rotation to Logs/wheel_debug.csv while the wheel is held or returning.")]
         [SerializeField] private bool debugLog = false;
+        [SerializeField] private Transform _leftInteractorsRoot;
+        [SerializeField] private Transform _rightInteractorsRoot;
 
         private Quaternion _originRotation;
         private float _wheelAngle;
@@ -46,6 +48,7 @@ namespace XrRacing.Gameplay.Input
         public Transform WheelTransform => wheelTransform;
         private HandGrabInteractor[] _handInteractors;
         private HandGrabInteractable[] _wheelInteractables;
+        private IInteractableView[] _allWheelInteractables;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private Transform _trackingSpace;
@@ -121,6 +124,9 @@ namespace XrRacing.Gameplay.Input
             _wheelInteractables = System.Array.FindAll(
                 FindObjectsByType<HandGrabInteractable>(FindObjectsInactive.Include),
                 IsWheelInteractable);
+            _allWheelInteractables = wheelTransform != null
+                ? wheelTransform.GetComponentsInChildren<IInteractableView>(true)
+                : System.Array.Empty<IInteractableView>();
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (!WheelDebugLog.Enabled || wheelTransform == null)
@@ -135,6 +141,7 @@ namespace XrRacing.Gameplay.Input
 
             OVRCameraRig rig = FindAnyObjectByType<OVRCameraRig>();
             _trackingSpace = rig != null ? rig.trackingSpace : null;
+
 
             Renderer wheelRenderer = wheelTransform.GetComponentInChildren<Renderer>();
             Collider wheelCollider = wheelTransform.GetComponent<Collider>();
@@ -454,6 +461,11 @@ namespace XrRacing.Gameplay.Input
             PedalAction indexAction, PedalAction thumbAction,
             ref float accelerate, ref float brake)
         {
+            if (!IsHoldingWheel(handedness))
+            {
+                return;
+            }
+
             float index = ReadTrigger(controller);
             float thumb = OVRInput.Get(OVRInput.Button.One, controller) ? 1f : 0f;
 
@@ -478,6 +490,42 @@ namespace XrRacing.Gameplay.Input
             {
                 accelerate = Mathf.Max(accelerate, value);
             }
+        }
+
+        // Checks if a hand is holding the wheel via direct grab or through interactables under the root transforms.
+        private bool IsHoldingWheel(Handedness handedness)
+        {
+            if (wheelGrabbable == null || wheelGrabbable.SelectingPointsCount == 0)
+            {
+                return false;
+            }
+
+            if (GetHandHoldingWheel(handedness) != null)
+            {
+                return true;
+            }
+
+            var targetRoot = handedness == Handedness.Left ? _leftInteractorsRoot : _rightInteractorsRoot;
+            if (targetRoot != null && _allWheelInteractables != null)
+            {
+                foreach (var interactable in _allWheelInteractables)
+                {
+                    if (interactable == null)
+                    {
+                        continue;
+                    }
+
+                    foreach (var interactor in interactable.SelectingInteractorViews)
+                    {
+                        if (interactor is Component comp && comp.transform.IsChildOf(targetRoot))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
         }
 
         // The tracked (not controller-driven) hand on that side while it is holding the wheel, or null otherwise.

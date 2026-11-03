@@ -85,8 +85,19 @@ namespace XrRacing.Gameplay.Characters
                 }
             }
 
+            var controller = _animator.runtimeAnimatorController;
+            if (controller != null)
+            {
+                _animator.runtimeAnimatorController = null;
+                _animator.Rebind();
+            }
+
             // Rest pose relationships are taken relative to the root, whose forward is the character's facing.
             var root = _animator.transform;
+            if (_seat != null)
+            {
+                root.SetPositionAndRotation(_seat.position, _seat.rotation);
+            }
             _floorHeight = root.position.y;
             _headBone = _animator.GetBoneTransform(HumanBodyBones.Head);
             _restScale = root.localScale;
@@ -100,6 +111,10 @@ namespace XrRacing.Gameplay.Characters
                 HumanBodyBones.LeftHand, HumanBodyBones.LeftMiddleProximal, -1f);
             _rightArm = Arm.Create(_animator, HumanBodyBones.RightUpperArm, HumanBodyBones.RightLowerArm,
                 HumanBodyBones.RightHand, HumanBodyBones.RightMiddleProximal, 1f);
+            if (controller != null)
+            {
+                _animator.runtimeAnimatorController = controller;
+            }
         }
 
         private void LateUpdate()
